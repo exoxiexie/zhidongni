@@ -1,6 +1,5 @@
 {
-  "versionName": "1.0.25",
-  "versionCode": 26,
-  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.25/zhiguanjia_v1.0.25.apk",
-  "changelog": "对话页新增左侧抽屉：双杠菜单图标+新建�z)Җ:�>˖�碾w�"X��+设置。"
-}
+  "versionName": "1.0.26",
+  "versionCode": 27,
+  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.26/zhiguanjia_v1.0.26.apk",
+  "changelog": "修复检查更新一直转圈：15秒超时保护+loading�yal�� ���
