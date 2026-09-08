@@ -1,6 +1,6 @@
 {
-  "versionName": "1.0.20",
-  "versionCode": 21,
-  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.20/zhiguanjia_v1.0.20.apk",
-  "changelog": "修复检查更新缓存问题：1.给version.json诵�`�b�9���e�9�,{�^��tv�FVR4D�{��c��2.兼容versionName/version和changelog/note两种字段名；3.GitHub源同步更新。"
+  "versionName": "1.0.21",
+  "versionCode": 22,
+  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.21/zhiguanjia_v1.0.21.apk",
+  "changelog": "修复模型下拉框左对齐：与输入框左沿精确对齐。"
 }
