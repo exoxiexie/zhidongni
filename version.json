@@ -1,1 +1,6 @@
-{"version":"1.0.17","versionCode":18,"url":"https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.17/zhiguanjia_v1.0.17.apk","note":"对话升级为Agent模式：联网搜索自动触发"}
+{
+  "versionName": "1.0.18",
+  "versionCode": 19,
+  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.18/zhiguanjia_v1.0.18.apk",
+  "changelog": "输入栏UI优化：模型选择器移到输入框外面上方（下拉按钮+横向滑动功能键区）；+按钮和发送按钮移到输入框内部；输入框撑满宽度。"
+}
