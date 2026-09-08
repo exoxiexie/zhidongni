@@ -1,6 +1,6 @@
 {
-  "versionName": "1.0.32",
-  "versionCode": 33,
-  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.32/zhiguanjia_v1.0.32.apk",
-  "changelog": "修复移动硬盘文件解析失败和文件夹遍历失败。"
+  "versionName": "1.0.33",
+  "versionCode": 34,
+  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.33/zhiguanjia_v1.0.33.apk",
+  "changelog": "接入DeepSeek V4.1 Flash内测版，原生多模态支持。"
 }
