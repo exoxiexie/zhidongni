@@ -1,5 +1,6 @@
 {
-  "versionName": "1.0.31",
-  "versionCode": 32,
-  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.31/zhiguanjia_v1.0.31.apk",
-  "changelog": "修复U盘文件夹选择报错，��ioy�zK�iK�yJ���h��ih~K�nik�[��8" �
+  "versionName": "1.0.32",
+  "versionCode": 33,
+  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.32/zhiguanjia_v1.0.32.apk",
+  "changelog": "修复移动硬盘文件解析失败和文件夹遍历失败。"
+}
