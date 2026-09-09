@@ -1,6 +1,6 @@
 {
-  "versionName": "1.1.9",
-  "versionCode": 52,
-  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.9/zhidongni_v1.1.9.apk",
-  "changelog": "数据库新增政务数据专区"
+  "versionName": "1.2.0",
+  "versionCode": 53,
+  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.0/zhidongni_v1.2.0.apk",
+  "changelog": "本地多租户存储层基础设施"
 }
