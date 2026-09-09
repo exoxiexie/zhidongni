@@ -1,6 +1,6 @@
 {
-  "versionName": "1.1.1",
-  "versionCode": 44,
-  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.1/zhidongni_v1.1.1.apk",
-  "changelog": "企业主体登录功能上线：企业注册、企业登录、数据库页面展示企业信息、企业搜索"
+  "versionName": "1.1.2",
+  "versionCode": 45,
+  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.2/zhidongni_v1.1.2.apk",
+  "changelog": "登录入口改为企业登录注册，删除个人登录"
 }
