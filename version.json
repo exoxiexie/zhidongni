@@ -1,6 +1,6 @@
 {
-  "versionName": "1.2.2",
-  "versionCode": 55,
-  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.2/zhidongni_v1.2.2.apk",
-  "changelog": "对话记忆专区"
+  "versionName": "1.2.3",
+  "versionCode": 56,
+  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.3/zhidongni_v1.2.3.apk",
+  "changelog": "修复数据库页面滚动布局"
 }
