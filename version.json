@@ -1,6 +1,6 @@
 {
-  "versionName": "1.0.37",
-  "versionCode": 38,
-  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.37/zhiguanjia_v1.0.37.apk",
-  "changelog": "修复检查更新超时问题，Gitee改用API方式，超时增加到15秒。"
+  "versionName": "1.0.38",
+  "versionCode": 39,
+  "url": "https://gitee.com/laoxie2076/zhiguanjia/releases/download/v1.0.38/zhiguanjia_v1.0.38.apk",
+  "changelog": "修复身份拦截+抽屉宽度80%"
 }
