@@ -1,7 +1,6 @@
-# zhiguanjia
+# zhidongni
 
-#### 介绍
-职管家 APK 发布仓库
+智懂你 APK 发布仓库
 
 #### 软件架构
 软件架构说明
