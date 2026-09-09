@@ -1,6 +1,6 @@
 {
-  "versionName": "1.1.7",
-  "versionCode": 50,
-  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.7/zhidongni_v1.1.7.apk",
-  "changelog": "修复下载进度条不更新问题（setDialogState）"
+  "versionName": "1.1.8",
+  "versionCode": 51,
+  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.8/zhidongni_v1.1.8.apk",
+  "changelog": "历史会话功能+SnackBar居中"
 }
