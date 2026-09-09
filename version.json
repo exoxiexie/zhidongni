@@ -1,6 +1,6 @@
 {
-  "versionName": "1.1.4",
-  "versionCode": 47,
-  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.4/zhidongni_v1.1.4.apk",
-  "changelog": "洞察Tab改版为微信发现页风格，新增加深入洞察和风险预警栏目"
+  "versionName": "1.1.5",
+  "versionCode": 48,
+  "url": "https://gitee.com/laoxie2076/zhidongni/releases/download/v1.1.5/zhidongni_v1.1.5.apk",
+  "changelog": "修复洞察Tab映射错误和下载进度条显示问题"
 }
