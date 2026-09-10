@@ -1,1 +1,1 @@
-{"versionName":"1.2.6","versionCode":59,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.6/zhidongni_v1.2.6.apk","changelog":"安全升级：DeepSeek 调用改为服务端代理，真实密钥不再内置 App"}
+{"versionName":"1.2.7","versionCode":60,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.7/zhidongni_v1.2.7.apk","changelog":"模块化重构：引入轻量 DI 层 ServiceLocator，抽取 ChatSessionService，home_tab 不再直接操作数据库"}
