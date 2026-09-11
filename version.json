@@ -1,1 +1,1 @@
-{"versionName":"1.2.22","versionCode":75,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.22/app-release.apk","changelog":"修复身份拦截误触发：移除过于宽泛的公司关键词，正常业务问题不再被误判为身份问题"}
+{"versionName":"1.2.23","versionCode":76,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.23/app-release.apk","changelog":"修复模型回答截断（max_tokens调大到24576），添加搜索沉淀详细日志排查沉淀不生效问题"}

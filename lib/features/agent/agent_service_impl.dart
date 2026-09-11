@@ -11,7 +11,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/api_config.dart';
@@ -114,7 +113,7 @@ class HttpAgentService implements AgentService {
           'messages': messages,
           if (tools.isNotEmpty) 'tools': tools.map(_toToolSchema).toList(),
           if (tools.isNotEmpty) 'tool_choice': 'auto',
-          'max_tokens': 2048,
+          'max_tokens': 24576,
         },
         options: Options(headers: {
           'X-Proxy-Token': ApiConfig.proxyToken,
@@ -226,6 +225,7 @@ class HttpAgentService implements AgentService {
 
     // ── 联网搜索自动沉淀：本次调用了搜索工具且有租户ID时，异步沉淀模型回复 ──
     if (usedSearch && _tenantId != null && _tenantId!.isNotEmpty && reply.isNotEmpty) {
+      print('[搜索沉淀] 触发沉淀: usedSearch=$usedSearch, tenantId=$_tenantId, reply长度=${reply.length}, 搜索结果=${searchSources.length}, 读取网页=${fetchedUrls.length}');
       final title = searchQuery.length > 30
           ? '${searchQuery.substring(0, 30)}...'
           : (searchQuery.isEmpty ? '联网搜索' : searchQuery);
@@ -243,17 +243,21 @@ class HttpAgentService implements AgentService {
       // 异步执行，不 await，不阻塞返回
       () async {
         try {
-          await SearchDataStore.create(
+          final created = await SearchDataStore.create(
             tenantId: _tenantId!,
             title: title,
             searchQuery: searchQuery,
             content: reply,
             sources: allSources,
           );
-        } catch (e) {
-          debugPrint('Agent搜索数据自动沉淀失败: $e');
+          print('[搜索沉淀] 沉淀成功: id=${created.id}, title=${created.title}, 信源数=${created.sources.length}');
+        } catch (e, stackTrace) {
+          print('[搜索沉淀] 沉淀失败: $e');
+          print('[搜索沉淀] 堆栈: $stackTrace');
         }
       }();
+    } else {
+      print('[搜索沉淀] 未触发沉淀: usedSearch=$usedSearch, tenantId=${_tenantId ?? "null"}, reply长度=${reply.length}');
     }
 
     return AgentResult(
@@ -279,7 +283,7 @@ class HttpAgentService implements AgentService {
       data: {
         'model': model,
         'messages': messages,
-        'max_tokens': 2048,
+        'max_tokens': 24576,
         'stream': true,
       },
       options: Options(
@@ -450,7 +454,7 @@ class HttpAgentService implements AgentService {
       ApiConfig.anthropicMessagesUrl,
       data: {
         'model': _searchModel,
-        'max_tokens': 2048,
+        'max_tokens': 24576,
         'messages': [
           {
             'role': 'user',
