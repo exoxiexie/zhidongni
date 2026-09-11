@@ -137,6 +137,11 @@ abstract class AgentService {
   /// 传入 null 表示清除企业上下文。
   void setEnterpriseContext(String? contextText);
 
+  /// 设置当前租户ID（企业统一社会信用代码），用于搜索数据自动沉淀等租户隔离操作。
+  ///
+  /// 传入 null 表示清除租户ID。
+  void setTenantId(String? tenantId);
+
   /// 运行一次 Agent 任务。
   ///
   /// [history] 完整对话历史（含最新一条用户消息，ChatMessage 格式）。

@@ -11,10 +11,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/api_config.dart';
 import '../../contracts/chat_service.dart';
+import '../storage/search_data_store.dart';
 
 class HttpAgentService implements AgentService {
   /// 搜索用模型
@@ -25,9 +27,17 @@ class HttpAgentService implements AgentService {
   /// 企业工商照面上下文（作为系统提示词注入每次 Agent 任务）
   String? _enterpriseContext;
 
+  /// 当前租户ID（企业统一社会信用代码），用于搜索数据自动沉淀
+  String? _tenantId;
+
   @override
   void setEnterpriseContext(String? contextText) {
     _enterpriseContext = contextText;
+  }
+
+  @override
+  void setTenantId(String? tenantId) {
+    _tenantId = tenantId;
   }
 
   HttpAgentService({Dio? dio})
@@ -421,6 +431,31 @@ class HttpAgentService implements AgentService {
         }
       }
     }
+
+    // ── 联网搜索自动沉淀：搜索成功且有租户ID时，异步沉淀搜索数据，不阻塞返回 ──
+    if (sources.isNotEmpty && _tenantId != null && _tenantId!.isNotEmpty) {
+      final title = query.length > 30 ? '${query.substring(0, 30)}...' : query;
+      final contentBuf = StringBuffer('# 搜索结果\n\n');
+      for (var i = 0; i < sources.length; i++) {
+        contentBuf.writeln('## ${i + 1}. ${sources[i].title}');
+        contentBuf.writeln('- 链接：${sources[i].url}');
+        contentBuf.writeln('');
+      }
+      // 异步执行，不 await，不阻塞搜索结果返回
+      () async {
+        try {
+          await SearchDataStore.create(
+            tenantId: _tenantId!,
+            title: title.isEmpty ? '联网搜索' : title,
+            searchQuery: query,
+            content: contentBuf.toString(),
+          );
+        } catch (e) {
+          debugPrint('Agent搜索数据自动沉淀失败: $e');
+        }
+      }();
+    }
+
     return sources;
   }
 }

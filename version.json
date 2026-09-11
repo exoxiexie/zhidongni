@@ -1,1 +1,1 @@
-{"versionName":"1.2.18","versionCode":71,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.18/app-release.apk","changelog":"联网搜索数据自动沉淀：对话中搜索后回复完成时自动沉淀，默认权重30不进上下文，列表页滑块调权重到60以上自动进上下文"}
+{"versionName":"1.2.19","versionCode":72,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.19/app-release.apk","changelog":"修复联网搜索数据自动沉淀不生效：Agent模式搜索走AgentService，已在searchWeb方法添加自动沉淀逻辑"}
