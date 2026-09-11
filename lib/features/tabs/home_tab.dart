@@ -193,6 +193,113 @@ class HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// 供外部调用：提炼当前对话为记忆（手动触发）
+  ///
+  /// 弹出确认对话框，用户选择增量提炼或全部提炼后，
+  /// 调用 AI 对对话内容进行提炼，保存到对话记忆数据中。
+  Future<void> extractToMemory() async {
+    if (_isLoading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI 正在回复中，请稍后再提炼')),
+      );
+      return;
+    }
+
+    final messages = _sessionService.currentMessages;
+    if (messages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('当前对话没有内容，无法提炼')),
+      );
+      return;
+    }
+
+    // 检查是否有过提炼记录
+    final lastExtractedId = await _sessionService.getLastExtractedMessageId();
+    final hasExtracted = lastExtractedId != null && lastExtractedId.isNotEmpty;
+
+    if (!mounted) return;
+
+    // 弹出确认对话框
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('提炼为记忆'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              hasExtracted
+                  ? '将对上次提炼之后的新对话进行增量提炼，避免重复。'
+                  : '将对当前全部对话内容进行提炼，生成一条结构化记忆。',
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '当前对话共 ${messages.length} 条消息',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          if (hasExtracted)
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('增量提炼'),
+            ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(hasExtracted ? '全部提炼' : '开始提炼'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != true || !mounted) return;
+
+    // 显示 loading
+    setState(() {
+      _isLoading = true;
+      _thinkingText = '正在提炼记忆…';
+    });
+
+    try {
+      final success = await _sessionService.extractToMemory(
+        incremental: hasExtracted,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('提炼成功！已保存到对话记忆数据'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('提炼完成，没有值得长期记住的内容')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('提炼失败：$e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _thinkingText = '正在思考…';
+        });
+      }
+    }
+  }
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;

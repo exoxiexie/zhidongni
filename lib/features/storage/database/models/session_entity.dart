@@ -6,6 +6,7 @@ class SessionEntity {
   final int createdAt; // 毫秒时间戳
   final int updatedAt; // 毫秒时间戳
   final int messageCount;
+  final String? lastExtractedMessageId; // 最后一次提炼时的消息ID（用于增量提炼）
 
   const SessionEntity({
     required this.id,
@@ -14,6 +15,7 @@ class SessionEntity {
     required this.createdAt,
     required this.updatedAt,
     this.messageCount = 0,
+    this.lastExtractedMessageId,
   });
 
   Map<String, dynamic> toMap() => {
@@ -23,6 +25,7 @@ class SessionEntity {
         'created_at': createdAt,
         'updated_at': updatedAt,
         'message_count': messageCount,
+        'last_extracted_message_id': lastExtractedMessageId,
       };
 
   factory SessionEntity.fromMap(Map<String, dynamic> map) => SessionEntity(
@@ -32,12 +35,14 @@ class SessionEntity {
         createdAt: map['created_at'] as int,
         updatedAt: map['updated_at'] as int,
         messageCount: map['message_count'] as int? ?? 0,
+        lastExtractedMessageId: map['last_extracted_message_id'] as String?,
       );
 
   SessionEntity copyWith({
     String? title,
     int? updatedAt,
     int? messageCount,
+    String? lastExtractedMessageId,
   }) =>
       SessionEntity(
         id: id,
@@ -46,5 +51,6 @@ class SessionEntity {
         createdAt: createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         messageCount: messageCount ?? this.messageCount,
+        lastExtractedMessageId: lastExtractedMessageId ?? this.lastExtractedMessageId,
       );
 }

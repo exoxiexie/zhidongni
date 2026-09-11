@@ -58,6 +58,14 @@ class SessionDao {
     );
   }
 
+  /// 更新最后提炼的消息ID（用于增量提炼）
+  Future<void> updateLastExtractedMessageId(String sessionId, String messageId) async {
+    await _db.rawUpdate(
+      'UPDATE sessions SET last_extracted_message_id = ?, updated_at = ? WHERE id = ?',
+      [messageId, DateTime.now().millisecondsSinceEpoch, sessionId],
+    );
+  }
+
   /// 删除会话（级联删除消息）
   Future<void> delete(String id) async {
     await _db.delete(

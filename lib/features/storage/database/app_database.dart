@@ -28,7 +28,7 @@ class AppDatabase {
     final path = await TenantStorage.getDatabasePath(tenantId);
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -63,7 +63,8 @@ class AppDatabase {
         title TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
-        message_count INTEGER DEFAULT 0
+        message_count INTEGER DEFAULT 0,
+        last_extracted_message_id TEXT
       )
     ''');
 
@@ -173,6 +174,13 @@ class AppDatabase {
       );
       await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_local_sessions_tenant_id ON local_upload_sessions(tenant_id)',
+      );
+    }
+
+    if (oldVersion < 3) {
+      // v2 → v3：sessions 表添加最后提炼消息ID字段（用于增量提炼）
+      await db.execute(
+        'ALTER TABLE sessions ADD COLUMN last_extracted_message_id TEXT',
       );
     }
   }

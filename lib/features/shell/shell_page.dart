@@ -212,9 +212,15 @@ class _ShellPageState extends State<ShellPage> {
         automaticallyImplyLeading: false,
         // 仅对话页显示双杠菜单图标
         leading: _index == 2 ? _buildMenuIcon() : null,
-        // 仅对话页显示右上角笔图标（新建对话）
+        // 仅对话页显示右上角按钮（提炼为记忆 + 新建对话）
         actions: _index == 2
             ? [
+                IconButton(
+                  icon: const Icon(Icons.auto_awesome, size: 22),
+                  onPressed: () => _homeTabKey.currentState?.extractToMemory(),
+                  tooltip: '提炼为记忆',
+                ),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.edit, size: 22),
                   onPressed: () => _homeTabKey.currentState?.newConversation(),

@@ -248,4 +248,87 @@ class ChatSessionServiceImpl implements ChatSessionService {
     }
     return buf.toString();
   }
+
+  @override
+  Future<String?> getLastExtractedMessageId() async {
+    if (_tenantId == null || !_ready) return null;
+    final sessionId = _conversations[_currentIndex].id;
+    try {
+      final session = await _sessionDao.findById(sessionId);
+      return session?.lastExtractedMessageId;
+    } catch (e) {
+      debugPrint('获取最后提炼消息ID失败: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<void> updateLastExtractedMessageId(String messageId) async {
+    if (_tenantId == null || !_ready) return;
+    final sessionId = _conversations[_currentIndex].id;
+    try {
+      await _sessionDao.updateLastExtractedMessageId(sessionId, messageId);
+    } catch (e) {
+      debugPrint('更新最后提炼消息ID失败: $e');
+    }
+  }
+
+  @override
+  Future<bool> extractToMemory({bool incremental = true}) async {
+    if (_tenantId == null || !_ready) return false;
+    final sessionId = _conversations[_currentIndex].id;
+    try {
+      // 从数据库获取当前会话的所有消息（带 id，按时间正序）
+      final allMessages = await _messageDao.findBySession(sessionId);
+      if (allMessages.isEmpty) return false;
+
+      // 确定提炼范围
+      List<MessageEntity> messagesToExtract;
+      if (incremental) {
+        final lastId = await getLastExtractedMessageId();
+        if (lastId != null && lastId.isNotEmpty) {
+          // 找到最后提炼的消息的索引，只提炼之后的增量消息
+          final lastIndex = allMessages.indexWhere((m) => m.id == lastId);
+          if (lastIndex >= 0 && lastIndex < allMessages.length - 1) {
+            messagesToExtract = allMessages.sublist(lastIndex + 1);
+          } else {
+            // 找不到或已经是最后一条，没有新消息
+            return false;
+          }
+        } else {
+          // 从未提炼过，提炼全部
+          messagesToExtract = allMessages;
+        }
+      } else {
+        // 非增量模式，提炼全部
+        messagesToExtract = allMessages;
+      }
+
+      if (messagesToExtract.isEmpty) return false;
+
+      // 把消息转为对话文本
+      final buf = StringBuffer();
+      for (final m in messagesToExtract) {
+        final role = m.role == 'user' ? '用户' : '智懂你';
+        buf.writeln('【$role】${m.content}');
+      }
+      final conversationText = buf.toString();
+
+      // 调用 MemoryDistiller 做提炼
+      final success = await MemoryDistiller.distillAndSave(
+        tenantId: _tenantId!,
+        conversationText: conversationText,
+      );
+
+      // 提炼成功后，更新最后提炼的消息ID为最后一条消息的ID
+      if (success) {
+        await updateLastExtractedMessageId(messagesToExtract.last.id);
+      }
+
+      return success;
+    } catch (e) {
+      debugPrint('提炼为记忆失败: $e');
+      return false;
+    }
+  }
 }

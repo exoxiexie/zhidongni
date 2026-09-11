@@ -1,1 +1,1 @@
-{"versionName":"1.2.23","versionCode":76,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.23/app-release.apk","changelog":"修复模型回答截断（max_tokens调大到24576），添加搜索沉淀详细日志排查沉淀不生效问题"}
+{"versionName":"1.2.24","versionCode":77,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.24/zhidongni-v1.2.24.apk","changelog":"新增「提炼为记忆」功能：对话页右上角按钮手动触发AI增量提炼，生成结构化记忆保存到对话记忆数据，支持多次提炼不重复"}

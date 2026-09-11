@@ -60,4 +60,18 @@ abstract class ChatSessionService {
 
   /// 把当前会话完整内容写为原始 JSON 存档（sessions/{sessionId}.json）。
   Future<void> syncArchive();
+
+  /// 获取当前会话最后一次提炼时的消息ID（用于增量提炼）。
+  /// 返回 null 表示从未提炼过。
+  Future<String?> getLastExtractedMessageId();
+
+  /// 更新当前会话最后一次提炼时的消息ID。
+  Future<void> updateLastExtractedMessageId(String messageId);
+
+  /// 把当前会话提炼为记忆。
+  ///
+  /// [incremental] 为 true 时，只提炼上一次提炼之后的增量消息；
+  /// 为 false 时，提炼全部消息。
+  /// 返回 true 表示提炼成功并保存了记忆，false 表示提炼失败或无值得记忆的内容。
+  Future<bool> extractToMemory({bool incremental = true});
 }
