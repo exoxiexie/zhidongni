@@ -32,7 +32,7 @@ class MemoryDistiller {
   static const String _model = 'deepseek-v4-flash';
 
   /// 输入对话文本截断上限（字符数，控制 token 成本）
-  static const int _maxInputChars = 6000;
+  static const int _maxInputChars = 12000;
 
   static final Dio _dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 15),
@@ -43,12 +43,14 @@ class MemoryDistiller {
   ///
   /// - [conversationText]：对话文本（"【用户】…【智懂你】…"格式）
   /// - [forceSave]：强制保存（手动提炼时使用），即使 AI 判断 has_memory=false 也保存
+  /// - [source]：记忆来源，"会话提炼"（自动）或"手动提炼"（手动）
   /// - 已有记忆会作为去重依据传给模型；命中时更新旧记忆而非新建
   /// - 全程不抛异常：任何失败都静默降级（返回 false），不打扰对话
   static Future<bool> distillAndSave({
     required String tenantId,
     required String conversationText,
     bool forceSave = false,
+    String source = '会话提炼',
   }) async {
     lastError = null;
     try {
@@ -66,7 +68,7 @@ class MemoryDistiller {
         ApiConfig.chatCompletionsUrl,
         data: {
           'model': _model,
-          'max_tokens': 1024,
+          'max_tokens': 4096,
           'temperature': 0.3,
           'messages': [
             {
@@ -158,6 +160,7 @@ class MemoryDistiller {
         existingItem.tags = tags;
         existingItem.category = category;
         existingItem.content = content;
+        existingItem.source = source;
         await MemoryStore.save(tenantId, existingItem);
       } else {
         final item = MemoryItem(
@@ -166,7 +169,7 @@ class MemoryDistiller {
           weight: weight.clamp(0, 100),
           tags: tags,
           category: category,
-          source: '会话提炼',
+          source: source,
           content: content,
         );
         await MemoryStore.save(tenantId, item);

@@ -319,6 +319,7 @@ class ChatSessionServiceImpl implements ChatSessionService {
         tenantId: _tenantId!,
         conversationText: conversationText,
         forceSave: true,
+        source: '手动提炼',
       );
 
       // 提炼成功后，更新最后提炼的消息ID为最后一条消息的ID

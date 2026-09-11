@@ -223,6 +223,20 @@ class _MemoryDetailPageState extends State<MemoryDetailPage> {
                   ),
                   const SizedBox(width: 8),
                 ],
+                if (m.source == '手动提炼') ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '手动提炼',
+                      style: TextStyle(fontSize: 10, color: Color(0xFF10B981)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 // 更新时间
                 Icon(Icons.access_time, size: 12, color: Colors.grey.shade400),
                 const SizedBox(width: 4),

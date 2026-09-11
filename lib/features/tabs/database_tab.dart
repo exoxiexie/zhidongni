@@ -295,6 +295,12 @@ class DatabaseTabState extends State<DatabaseTab> {
                             style: TextStyle(
                                 fontSize: 10, color: Color(0xFF6366F1)),
                           ),
+                        if (m.source == '手动提炼')
+                          const Text(
+                            '手动提炼',
+                            style: TextStyle(
+                                fontSize: 10, color: Color(0xFF10B981)),
+                          ),
                         Text(
                           _formatDate(m.updatedAt),
                           style: const TextStyle(
