@@ -168,6 +168,12 @@ typedef ChatStreamCallback = void Function(
 
 /// 对话服务接口
 abstract class ChatService {
+  /// 设置企业上下文（工商照面信息），作为每次对话的系统提示词注入。
+  ///
+  /// 传入 null 表示清除企业上下文。上下文文本由调用方构造，
+  /// 实现层不耦合具体的企业数据模型。
+  void setEnterpriseContext(String? contextText);
+
   /// 发送消息并返回 AI 回复。
   ///
   /// [history] 为完整对话历史（含最新一条用户消息），

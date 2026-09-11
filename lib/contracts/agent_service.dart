@@ -132,6 +132,11 @@ class ToolDefinition {
 
 /// Agent 服务接口
 abstract class AgentService {
+  /// 设置企业上下文（工商照面信息），作为每次 Agent 任务的系统提示词注入。
+  ///
+  /// 传入 null 表示清除企业上下文。
+  void setEnterpriseContext(String? contextText);
+
   /// 运行一次 Agent 任务。
   ///
   /// [history] 完整对话历史（含最新一条用户消息，ChatMessage 格式）。

@@ -17,6 +17,9 @@ import '../../contracts/chat_session_service.dart';
 import '../../core/di/service_locator.dart';
 import '../agent/agent_service_impl.dart';
 import '../chat/attachment_parser.dart';
+import '../enterprise/enterprise_auth_service.dart';
+import '../enterprise/enterprise_data.dart';
+import '../enterprise/enterprise_model.dart';
 
 // 导出 Conversation 类型，保持 shell_page 等通过 import home_tab 间接访问的兼容性
 export '../../contracts/chat_session_service.dart' show Conversation;
@@ -45,7 +48,53 @@ class HomeTabState extends State<HomeTab> {
   /// 初始化会话服务（获取租户、打开数据库、加载历史会话）
   Future<void> _initSessionService() async {
     await _sessionService.init();
+    // 设置企业工商照面上下文（作为每次对话的系统提示词）
+    await _setupEnterpriseContext();
     if (mounted) setState(() {});
+  }
+
+  /// 获取当前登录企业的工商照面信息，构造上下文文本并设置到对话服务
+  Future<void> _setupEnterpriseContext() async {
+    try {
+      final auth = await EnterpriseAuthService.getAuth();
+      if (auth == null) {
+        widget.chatService.setEnterpriseContext(null);
+        return;
+      }
+      // 根据 enterpriseId 或 enterpriseName 查找企业完整信息
+      final ent = kEnterpriseSeedData.firstWhere(
+        (e) => e.id == auth.enterpriseId || e.name == auth.enterpriseName,
+        orElse: () => const Enterprise(
+          id: '', name: '', creditCode: '', legalPerson: '', status: '',
+          foundedAt: '', registeredCapital: '', enterpriseType: '',
+          region: '', address: '', businessScope: '',
+        ),
+      );
+      if (ent.id.isEmpty) {
+        widget.chatService.setEnterpriseContext(null);
+        return;
+      }
+      // 构造工商照面上下文文本
+      final buf = StringBuffer();
+      buf.writeln('企业名称：${ent.name}');
+      buf.writeln('统一社会信用代码：${ent.creditCode}');
+      buf.writeln('法定代表人：${ent.legalPerson}');
+      buf.writeln('经营状态：${ent.status}');
+      buf.writeln('成立日期：${ent.foundedAt}');
+      buf.writeln('注册资本：${ent.registeredCapital}');
+      buf.writeln('企业类型：${ent.enterpriseType}');
+      if (ent.industry.isNotEmpty) buf.writeln('所属行业：${ent.industry}');
+      if (ent.staffScale.isNotEmpty) buf.writeln('人员规模：${ent.staffScale}');
+      buf.writeln('所在区域：${ent.region}');
+      buf.writeln('注册地址：${ent.address}');
+      buf.write('经营范围：${ent.businessScope}');
+      widget.chatService.setEnterpriseContext(buf.toString());
+      widget.agentService?.setEnterpriseContext(buf.toString());
+    } catch (e) {
+      debugPrint('设置企业上下文失败: $e');
+      widget.chatService.setEnterpriseContext(null);
+      widget.agentService?.setEnterpriseContext(null);
+    }
   }
 
   /// 当前对话的消息列表（便捷访问）

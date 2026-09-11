@@ -30,6 +30,14 @@ class HttpChatService implements ChatService {
 
   final Dio _dio;
 
+  /// 企业工商照面上下文（作为系统提示词注入每次对话）
+  String? _enterpriseContext;
+
+  @override
+  void setEnterpriseContext(String? contextText) {
+    _enterpriseContext = contextText;
+  }
+
   HttpChatService({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -109,6 +117,16 @@ class HttpChatService implements ChatService {
             '"我是智懂你 AI 管家，致力于为你提供职业成长、企业管理等全方位的智能服务。"\n\n'
             '其他要求：请始终用中文回答，保持专业、准确、诚实。具体使用的底层模型由系统后台配置和管理，你不需要关心也不需要透露。',
       });
+      // ── 企业工商照面上下文：作为系统提示词注入，让 AI 知道当前服务的企业主体 ──
+      if (_enterpriseContext != null && _enterpriseContext!.isNotEmpty) {
+        messages.add({
+          'role': 'system',
+          'content': '【当前服务企业主体信息】\n'
+              '$_enterpriseContext\n\n'
+              '请在回答用户问题时，结合以上企业主体信息给出针对性的建议和分析。'
+              '如果用户的问题与该企业相关，请优先基于以上信息回答。',
+        });
+      }
       if (fetchedText != null && fetchedUrl != null) {
         // 网页正文作为 system 上下文注入，保留完整对话历史
         messages.add({

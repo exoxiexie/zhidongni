@@ -22,6 +22,14 @@ class HttpAgentService implements AgentService {
 
   final Dio _dio;
 
+  /// 企业工商照面上下文（作为系统提示词注入每次 Agent 任务）
+  String? _enterpriseContext;
+
+  @override
+  void setEnterpriseContext(String? contextText) {
+    _enterpriseContext = contextText;
+  }
+
   HttpAgentService({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -263,6 +271,16 @@ class HttpAgentService implements AgentService {
   Future<List<Map<String, dynamic>>> _buildMessages(
       List<ChatMessage> history) async {
     final messages = <Map<String, dynamic>>[];
+    // ── 企业工商照面上下文：作为系统提示词注入 ──
+    if (_enterpriseContext != null && _enterpriseContext!.isNotEmpty) {
+      messages.add({
+        'role': 'system',
+        'content': '【当前服务企业主体信息】\n'
+            '$_enterpriseContext\n\n'
+            '请在回答用户问题时，结合以上企业主体信息给出针对性的建议和分析。'
+            '如果用户的问题与该企业相关，请优先基于以上信息回答。',
+      });
+    }
     for (var i = 0; i < history.length; i++) {
       final m = history[i];
       final att = m.attachment;
