@@ -86,6 +86,11 @@ class HomeTabState extends State<HomeTab> {
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
 
+  /// 供外部调用：设置输入框内容（快捷指令跳转时使用）
+  void setInputText(String text) {
+    _controller.text = text;
+  }
+
   /// 当前选中的对话模型（默认 Vision Expert，多模态）
   ChatModel _selectedModel = kChatModels[3];
 

@@ -179,11 +179,20 @@ class _ShellPageState extends State<ShellPage> {
     );
   }
 
+  /// 供外部调用：快捷指令跳转——切换到对话页并填入预设指令
+  void sendPresetCommand(String command) {
+    setState(() => _index = 2); // 切换到对话页
+    // 等待对话页构建完成后设置输入框内容
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _homeTabKey.currentState?.setInputText(command);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
       DatabaseTab(key: _databaseTabKey),
-      const InsightTab(),
+      InsightTab(onPresetCommand: sendPresetCommand),
       HomeTab(
         key: _homeTabKey,
         chatService: widget.chatService!,
