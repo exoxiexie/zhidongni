@@ -111,10 +111,8 @@ class DatabaseTabState extends State<DatabaseTab> {
               children: [
                 // 顶部企业主体信息区
                 _auth == null ? _buildNotLoggedIn() : _buildEnterpriseInfo(),
-                // 政务数据专区（固定4项）
-                if (_auth != null) _buildGovernmentDataList(),
-                // 对话记忆专区
-                if (_auth != null) _buildMemorySection(),
+                // 五大类数据模块卡片
+                if (_auth != null) _buildDataModules(),
               ],
             ),
           ),
@@ -489,6 +487,166 @@ class DatabaseTabState extends State<DatabaseTab> {
     );
   }
 
+  /// 五大类数据模块卡片：信息公开、对话记忆、本地私有、联网搜索、外接应用
+  Widget _buildDataModules() {
+    final modules = [
+      _DataModule(
+        icon: Icons.business_outlined,
+        color: const Color(0xFF2563EB),
+        title: '信息公开数据',
+        subtitle: '工商、税务、司法、信用等公开信息',
+      ),
+      _DataModule(
+        icon: Icons.auto_stories_outlined,
+        color: const Color(0xFF7C3AED),
+        title: '对话记忆数据',
+        subtitle: 'AI提炼、压缩、记忆三层沉淀',
+        count: _memories.length,
+      ),
+      _DataModule(
+        icon: Icons.folder_outlined,
+        color: const Color(0xFF059669),
+        title: '本地私有数据',
+        subtitle: '手机、电脑、U盘、移动硬盘文件',
+      ),
+      _DataModule(
+        icon: Icons.search_outlined,
+        color: const Color(0xFFF59E0B),
+        title: '联网搜索数据',
+        subtitle: '行业动态、新闻、社交媒体',
+      ),
+      _DataModule(
+        icon: Icons.extension_outlined,
+        color: const Color(0xFF0891B2),
+        title: '外接应用数据',
+        subtitle: '第三方应用、API、数据源接入',
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Column(
+        children: [
+          for (var i = 0; i < modules.length; i++) ...[
+            _buildModuleCard(modules[i]),
+            if (i < modules.length - 1) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 单个数据模块卡片
+  Widget _buildModuleCard(_DataModule module) {
+    return GestureDetector(
+      onTap: () => _openModuleDetail(module),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE4E3DD)),
+        ),
+        child: Row(
+          children: [
+            // 左侧图标
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: module.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(module.icon, size: 26, color: module.color),
+            ),
+            const SizedBox(width: 14),
+            // 中间标题+描述
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        module.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1B1C),
+                        ),
+                      ),
+                      if (module.count != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: module.color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${module.count}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: module.color,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    module.subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 右侧箭头
+            const Icon(Icons.chevron_right, size: 22, color: Color(0xFFC0C4CC)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 打开数据模块详情页（占位）
+  void _openModuleDetail(_DataModule module) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(
+            title: Text(module.title),
+            centerTitle: true,
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(module.icon, size: 56, color: module.color.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text(
+                  '${module.title}功能开发中',
+                  style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  module.subtitle,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -508,6 +666,23 @@ class DatabaseTabState extends State<DatabaseTab> {
       ),
     );
   }
+}
+
+/// 数据模块模型（五大类数据）
+class _DataModule {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final int? count;
+
+  const _DataModule({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    this.count,
+  });
 }
 
 /// 数据分类模型
