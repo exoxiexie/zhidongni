@@ -1,1 +1,1 @@
-{"versionName":"1.2.19","versionCode":72,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.19/app-release.apk","changelog":"修复联网搜索数据自动沉淀不生效：Agent模式搜索走AgentService，已在searchWeb方法添加自动沉淀逻辑"}
+{"versionName":"1.2.20","versionCode":73,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.20/app-release.apk","changelog":"联网搜索数据沉淀格式改版：沉淀主体改为搜索提炼内容（输入模型的上下文），信源链接作为备注折叠列在下方"}

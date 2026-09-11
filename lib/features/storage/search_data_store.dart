@@ -7,11 +7,14 @@
 /// - 文件路径：tenants/{creditCode}/search_data/{时间戳}_{slug}.md
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
+import '../../contracts/chat_service.dart';
 
 /// 联网搜索数据项
 class SearchDataItem {
@@ -22,7 +25,8 @@ class SearchDataItem {
   final String category; // 分类，固定"联网搜索"
   final String searchQuery; // 原始搜索关键词
   final String source; // 搜索来源（DSH搜索等）
-  final String content; // MD正文（AI提炼后的搜索结果摘要）
+  final String content; // MD正文（搜索提炼内容，输入模型的上下文）
+  final List<SearchSource> sources; // 信源列表（备注，不进上下文）
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -35,6 +39,7 @@ class SearchDataItem {
     required this.searchQuery,
     this.source = 'DSH搜索',
     required this.content,
+    this.sources = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -57,6 +62,7 @@ class SearchDataItem {
     String? searchQuery,
     String? source,
     String? content,
+    List<SearchSource>? sources,
     DateTime? updatedAt,
   }) {
     return SearchDataItem(
@@ -68,6 +74,7 @@ class SearchDataItem {
       searchQuery: searchQuery ?? this.searchQuery,
       source: source ?? this.source,
       content: content ?? this.content,
+      sources: sources ?? this.sources,
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
@@ -124,6 +131,21 @@ class SearchDataStore {
         }
       }
 
+      // 解析信源列表
+      List<SearchSource> sources = [];
+      final sourcesJson = yaml['sources'];
+      if (sourcesJson != null && sourcesJson.isNotEmpty) {
+        try {
+          final list = jsonDecode(sourcesJson) as List;
+          sources = list
+              .map((e) => SearchSource(
+                    title: (e as Map)['title']?.toString() ?? '',
+                    url: e['url']?.toString() ?? '',
+                  ))
+              .toList();
+        } catch (_) {}
+      }
+
       return SearchDataItem(
         id: id,
         title: yaml['title'] ?? '未命名搜索',
@@ -133,6 +155,7 @@ class SearchDataStore {
         searchQuery: yaml['search_query'] ?? '',
         source: yaml['source'] ?? 'DSH搜索',
         content: body,
+        sources: sources,
         createdAt: DateTime.tryParse(yaml['created_at'] ?? '') ?? DateTime.now(),
         updatedAt: DateTime.tryParse(yaml['updated_at'] ?? '') ?? DateTime.now(),
       );
@@ -151,6 +174,10 @@ class SearchDataStore {
     buf.writeln('category: ${item.category}');
     buf.writeln('search_query: ${item.searchQuery}');
     buf.writeln('source: ${item.source}');
+    if (item.sources.isNotEmpty) {
+      final sourcesJson = jsonEncode(item.sources.map((s) => {'title': s.title, 'url': s.url}).toList());
+      buf.writeln('sources: $sourcesJson');
+    }
     buf.writeln('created_at: ${item.createdAt.toIso8601String()}');
     buf.writeln('updated_at: ${item.updatedAt.toIso8601String()}');
     buf.writeln('---');
@@ -188,6 +215,7 @@ class SearchDataStore {
     required String title,
     required String searchQuery,
     required String content,
+    List<SearchSource> sources = const [],
     String source = 'DSH搜索',
     List<String> tags = const [],
     int weight = defaultWeight,
@@ -207,6 +235,7 @@ class SearchDataStore {
       searchQuery: searchQuery,
       source: source,
       content: content,
+      sources: sources,
       createdAt: now,
       updatedAt: now,
     );

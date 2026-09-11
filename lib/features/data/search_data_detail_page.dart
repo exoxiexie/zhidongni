@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../contracts/chat_service.dart';
 import '../storage/search_data_store.dart';
 import 'search_data_edit_page.dart';
 
@@ -234,6 +235,10 @@ class _SearchDataDetailPageState extends State<SearchDataDetailPage> {
                       ),
                       child: _renderMarkdown(_item!.content),
                     ),
+                    const SizedBox(height: 16),
+                    // 信源列表（备注，可折叠）
+                    if (_item!.sources.isNotEmpty)
+                      _buildSourcesSection(_item!.sources),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -258,6 +263,113 @@ class _SearchDataDetailPageState extends State<SearchDataDetailPage> {
           ),
         ],
       ),
+    );
+  }
+
+  /// 信源列表折叠区域
+  Widget _buildSourcesSection(List<SearchSource> sources) {
+    return StatefulBuilder(
+      builder: (context, setDialogState) {
+        bool expanded = false;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE4E3DD)),
+              ),
+              child: Column(
+                children: [
+                  // 标题行（可点击展开/折叠）
+                  GestureDetector(
+                    onTap: () => setState(() => expanded = !expanded),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.link, size: 18, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '本次搜索信源（${sources.length}个）',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            expanded ? Icons.expand_less : Icons.expand_more,
+                            size: 20,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 展开后的信源列表
+                  if (expanded)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                          const SizedBox(height: 12),
+                          for (var i = 0; i < sources.length; i++) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${i + 1}.',
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          sources[i].title,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF374151),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          sources[i].url,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF2563EB),
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -280,7 +280,9 @@ class HttpChatService implements ChatService {
       if (sources.isNotEmpty && _tenantId != null && _tenantId!.isNotEmpty) {
         final query = history.isNotEmpty ? history.last.content : '';
         final title = query.length > 30 ? '${query.substring(0, 30)}...' : query;
-        final contentBuf = StringBuffer('# 搜索结果\n\n');
+        // 沉淀内容 = 输入模型的搜索提炼上下文（格式化的搜索结果）
+        final contentBuf = StringBuffer('# 搜索提炼内容\n\n');
+        contentBuf.writeln('本次搜索共找到 ${sources.length} 条相关信息，整理如下：\n');
         for (var i = 0; i < sources.length; i++) {
           contentBuf.writeln('## ${i + 1}. ${sources[i].title}');
           contentBuf.writeln('- 链接：${sources[i].url}');
@@ -294,6 +296,7 @@ class HttpChatService implements ChatService {
               title: title.isEmpty ? '联网搜索' : title,
               searchQuery: query,
               content: contentBuf.toString(),
+              sources: sources,
             );
           } catch (e) {
             debugPrint('搜索数据自动沉淀失败: $e');
