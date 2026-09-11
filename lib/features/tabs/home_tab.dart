@@ -20,6 +20,7 @@ import '../chat/attachment_parser.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
 import '../enterprise/enterprise_model.dart';
+import '../enterprise/public_data.dart';
 
 // 导出 Conversation 类型，保持 shell_page 等通过 import home_tab 间接访问的兼容性
 export '../../contracts/chat_session_service.dart' show Conversation;
@@ -76,6 +77,7 @@ class HomeTabState extends State<HomeTab> {
       }
       // 构造工商照面上下文文本
       final buf = StringBuffer();
+      buf.writeln('【工商照面信息】');
       buf.writeln('企业名称：${ent.name}');
       buf.writeln('统一社会信用代码：${ent.creditCode}');
       buf.writeln('法定代表人：${ent.legalPerson}');
@@ -88,6 +90,64 @@ class HomeTabState extends State<HomeTab> {
       buf.writeln('所在区域：${ent.region}');
       buf.writeln('注册地址：${ent.address}');
       buf.write('经营范围：${ent.businessScope}');
+
+      // ── 税务信息 ──
+      final tax = kTaxData[ent.creditCode];
+      if (tax != null) {
+        buf.writeln();
+        buf.writeln();
+        buf.writeln('【税务信息】');
+        buf.writeln('纳税等级：${tax.taxRating}');
+        buf.writeln('年纳税额：${tax.annualTaxAmount}万元');
+        buf.writeln('欠税金额：${tax.owedTax}万元');
+        buf.writeln('涉税处罚次数：${tax.taxPenaltyCount}次');
+        if (tax.taxPenalties.isNotEmpty) {
+          buf.writeln('处罚记录：');
+          for (var i = 0; i < tax.taxPenalties.length; i++) {
+            final p = tax.taxPenalties[i];
+            buf.writeln('  ${i + 1}. ${p.date}｜${p.reason}｜罚款${p.amount}万元｜${p.authority}');
+          }
+        }
+        buf.write('非正常户：${tax.isTaxAbnormal ? "是" : "否"}');
+      }
+
+      // ── 司法信息 ──
+      final judicial = kJudicialData[ent.creditCode];
+      if (judicial != null) {
+        buf.writeln();
+        buf.writeln();
+        buf.writeln('【司法信息】');
+        buf.writeln('涉诉总数：${judicial.lawsuitCount}件（原告${judicial.asPlaintiffCount}件，被告${judicial.asDefendantCount}件）');
+        if (judicial.cases.isNotEmpty) {
+          buf.writeln('案件列表：');
+          for (var i = 0; i < judicial.cases.length; i++) {
+            final c = judicial.cases[i];
+            buf.writeln('  ${i + 1}. ${c.caseNo}｜${c.cause}｜角色：${c.role}｜涉案${c.amount}万元｜${c.status}｜${c.result}');
+          }
+        }
+        buf.writeln('执行案件数：${judicial.enforcementCount}件，执行标的总额：${judicial.enforcementAmount}万元');
+        buf.write('失信被执行人：${judicial.isDishonest ? "是（失信金额${judicial.dishonestAmount}万元）" : "否"}');
+      }
+
+      // ── 信用信息 ──
+      final credit = kCreditData[ent.creditCode];
+      if (credit != null) {
+        buf.writeln();
+        buf.writeln();
+        buf.writeln('【信用信息】');
+        buf.writeln('信用评级：${credit.creditRating}（信用分${credit.creditScore}分）');
+        buf.writeln('行政处罚次数：${credit.administrativePenaltyCount}次');
+        if (credit.administrativePenalties.isNotEmpty) {
+          buf.writeln('处罚记录：');
+          for (var i = 0; i < credit.administrativePenalties.length; i++) {
+            final p = credit.administrativePenalties[i];
+            buf.writeln('  ${i + 1}. ${p.date}｜${p.reason}｜${p.penaltyType}｜罚款${p.amount}万元｜${p.authority}');
+          }
+        }
+        buf.writeln('经营异常：${credit.isBusinessAbnormal ? "是（${credit.abnormalReason}）" : "否"}');
+        buf.write('严重违法失信：${credit.isSeriousIllegal ? "是" : "否"}');
+      }
+
       widget.chatService.setEnterpriseContext(buf.toString());
       widget.agentService?.setEnterpriseContext(buf.toString());
     } catch (e) {

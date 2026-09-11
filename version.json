@@ -1,1 +1,1 @@
-{"versionName":"1.2.13","versionCode":66,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.13/app-release.apk","changelog":"企业工商照面信息作为系统提示词注入每次对话上下文，AI回答结合当前企业主体信息给出针对性建议"}
+{"versionName":"1.2.14","versionCode":67,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.14/app-release.apk","changelog":"信息公开数据全部编排进系统提示词：工商+税务+司法+信用四张结构化数据表，4家企业完整示例数据，全部注入每次对话上下文"}
