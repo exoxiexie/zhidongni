@@ -11,6 +11,7 @@ import '../memory/memory_edit_page.dart';
 import '../storage/memory_store.dart';
 import '../data/public_data_detail_page.dart';
 import '../data/memory_detail_page.dart';
+import '../data/local_data_detail_page.dart';
 
 class DatabaseTab extends StatefulWidget {
   const DatabaseTab({super.key});
@@ -639,6 +640,18 @@ class DatabaseTabState extends State<DatabaseTab> {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => MemoryDetailPage(tenantId: creditCode),
+        ),
+      );
+      return;
+    }
+    // 本地私有数据 → 进入本地文件详情页
+    if (module.title == '本地私有数据') {
+      final creditCode = _enterprise?.creditCode.isNotEmpty == true
+          ? _enterprise!.creditCode
+          : _auth?.enterpriseId ?? '';
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => LocalDataDetailPage(tenantId: creditCode),
         ),
       );
       return;
