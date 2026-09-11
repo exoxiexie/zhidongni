@@ -21,6 +21,7 @@ import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
 import '../enterprise/enterprise_model.dart';
 import '../enterprise/public_data.dart';
+import '../memory/memory_distiller.dart';
 
 // 导出 Conversation 类型，保持 shell_page 等通过 import home_tab 间接访问的兼容性
 export '../../contracts/chat_session_service.dart' show Conversation;
@@ -281,8 +282,9 @@ class HomeTabState extends State<HomeTab> {
           ),
         );
       } else {
+        final errorMsg = MemoryDistiller.lastError ?? '未知错误';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('提炼失败，请稍后重试')),
+          SnackBar(content: Text('提炼失败：$errorMsg')),
         );
       }
     } catch (e) {

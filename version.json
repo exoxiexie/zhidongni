@@ -1,1 +1,1 @@
-{"versionName":"1.2.26","versionCode":79,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.26/zhidongni-v1.2.26.apk","changelog":"修复手动提炼为记忆报错问题，forceSave模式下即使AI返回格式不对也强制保存"}
+{"versionName":"1.2.27","versionCode":80,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.27/zhidongni-v1.2.27.apk","changelog":"提炼失败时显示具体错误信息，方便排查问题"}

@@ -25,6 +25,9 @@ import '../storage/memory_store.dart';
 
 /// 记忆提炼服务
 class MemoryDistiller {
+  /// 最近一次错误信息（供 UI 层展示具体错误原因）
+  static String? lastError;
+
   /// 提炼用模型：V4 Flash（快、便宜，适合结构化提炼任务）
   static const String _model = 'deepseek-v4-flash';
 
@@ -47,6 +50,7 @@ class MemoryDistiller {
     required String conversationText,
     bool forceSave = false,
   }) async {
+    lastError = null;
     try {
       // 已有记忆（id + 标题），用于去重合并
       final existing = await MemoryStore.listAll(tenantId);
@@ -101,11 +105,17 @@ class MemoryDistiller {
       );
 
       final choices = resp.data?['choices'] as List?;
-      if (choices == null || choices.isEmpty) return false;
+      if (choices == null || choices.isEmpty) {
+        lastError = '模型返回为空，choices=null';
+        return false;
+      }
       final text = (choices[0] as Map)['message']?['content']?.toString() ?? '';
       final result = parseResult(text);
       // 自动提炼时，解析失败或 has_memory=false 则不保存；手动提炼（forceSave）时强制保存
-      if (result == null && !forceSave) return false;
+      if (result == null && !forceSave) {
+        lastError = '解析模型输出失败，返回内容：${text.substring(0, text.length > 200 ? 200 : text.length)}';
+        return false;
+      }
       if (result != null && result['has_memory'] != true && !forceSave) return false;
 
       // ── 合并更新：命中已有记忆则更新，否则新建 ──
@@ -165,6 +175,7 @@ class MemoryDistiller {
     } catch (e) {
       // 提炼失败打印错误日志，方便排查
       debugPrint('MemoryDistiller 提炼失败: $e');
+      lastError = '异常：$e';
       return false;
     }
   }
