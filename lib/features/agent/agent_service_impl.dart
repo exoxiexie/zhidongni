@@ -30,6 +30,9 @@ class HttpAgentService implements AgentService {
   /// 当前租户ID（企业统一社会信用代码），用于搜索数据自动沉淀
   String? _tenantId;
 
+  /// 最近一次搜索的结果（用于自动沉淀时记录信源）
+  List<SearchSource>? _lastSearchSources;
+
   @override
   void setEnterpriseContext(String? contextText) {
     _enterpriseContext = contextText;
@@ -69,6 +72,12 @@ class HttpAgentService implements AgentService {
     var reply = '';
     var finished = false;
     final overall = Stopwatch()..start();
+
+    // ── 搜索状态记录（用于自动沉淀）──
+    var usedSearch = false;
+    var searchQuery = '';
+    final searchSources = <SearchSource>[];
+    final fetchedUrls = <String>[];
 
     for (var step = 1; step <= maxSteps; step++) {
       if (overall.elapsed > timeout) break;
@@ -177,6 +186,21 @@ class HttpAgentService implements AgentService {
         final result = await _executeTool(tools, name, args);
         onToolEnd?.call(name, result);
         totalToolCalls++;
+
+        // ── 记录搜索状态（用于自动沉淀）──
+        if (name == 'web_search') {
+          usedSearch = true;
+          searchQuery = args['query']?.toString() ?? '';
+          if (_lastSearchSources != null) {
+            searchSources.addAll(_lastSearchSources!);
+          }
+        } else if (name == 'web_fetch') {
+          final url = args['url']?.toString() ?? '';
+          if (url.isNotEmpty && !fetchedUrls.contains(url)) {
+            fetchedUrls.add(url);
+          }
+        }
+
         messages.add({
           'role': 'tool',
           'tool_call_id': tc['id']?.toString() ?? '',
@@ -198,6 +222,38 @@ class HttpAgentService implements AgentService {
         promptTokens: promptTokens,
         completionTokens: completionTokens,
       ));
+    }
+
+    // ── 联网搜索自动沉淀：本次调用了搜索工具且有租户ID时，异步沉淀模型回复 ──
+    if (usedSearch && _tenantId != null && _tenantId!.isNotEmpty && reply.isNotEmpty) {
+      final title = searchQuery.length > 30
+          ? '${searchQuery.substring(0, 30)}...'
+          : (searchQuery.isEmpty ? '联网搜索' : searchQuery);
+
+      // 合并信源列表：搜索结果 + 实际读取的网页URL（去重）
+      final allSources = <SearchSource>[...searchSources];
+      final seenUrls = searchSources.map((s) => s.url).toSet();
+      for (final url in fetchedUrls) {
+        if (!seenUrls.contains(url)) {
+          allSources.add(SearchSource(title: url, url: url));
+          seenUrls.add(url);
+        }
+      }
+
+      // 异步执行，不 await，不阻塞返回
+      () async {
+        try {
+          await SearchDataStore.create(
+            tenantId: _tenantId!,
+            title: title,
+            searchQuery: searchQuery,
+            content: reply,
+            sources: allSources,
+          );
+        } catch (e) {
+          debugPrint('Agent搜索数据自动沉淀失败: $e');
+        }
+      }();
     }
 
     return AgentResult(
@@ -432,34 +488,80 @@ class HttpAgentService implements AgentService {
       }
     }
 
-    // ── 联网搜索自动沉淀：搜索成功且有租户ID时，异步沉淀搜索数据，不阻塞返回 ──
-    if (sources.isNotEmpty && _tenantId != null && _tenantId!.isNotEmpty) {
-      final title = query.length > 30 ? '${query.substring(0, 30)}...' : query;
-      // 沉淀内容 = 输入模型的搜索提炼上下文（格式化的搜索结果）
-      final contentBuf = StringBuffer('# 搜索提炼内容\n\n');
-      contentBuf.writeln('本次搜索共找到 ${sources.length} 条相关信息，整理如下：\n');
-      for (var i = 0; i < sources.length; i++) {
-        contentBuf.writeln('## ${i + 1}. ${sources[i].title}');
-        contentBuf.writeln('- 链接：${sources[i].url}');
-        contentBuf.writeln('');
-      }
-      // 异步执行，不 await，不阻塞搜索结果返回
-      () async {
-        try {
-          await SearchDataStore.create(
-            tenantId: _tenantId!,
-            title: title.isEmpty ? '联网搜索' : title,
-            searchQuery: query,
-            content: contentBuf.toString(),
-            sources: sources,
-          );
-        } catch (e) {
-          debugPrint('Agent搜索数据自动沉淀失败: $e');
-        }
-      }();
-    }
+    // 保存最近一次搜索结果，供 Agent 循环结束后自动沉淀使用
+    _lastSearchSources = sources;
 
     return sources;
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  网页正文读取（web_fetch）
+  // ────────────────────────────────────────────────────────────
+
+  /// 读取指定 URL 的网页正文，清洗 HTML 后返回纯文本。
+  ///
+  /// - 去除 <script>、<style>、<nav>、<footer>、<header> 等无关标签
+  /// - 去除所有 HTML 标签，保留纯文本
+  /// - 压缩多余空白
+  /// - 截断到 maxLength 字符（默认 4000）
+  Future<String> fetchWebPage(String url, {int maxLength = 4000}) async {
+    try {
+      final resp = await _dio.get<String>(
+        url,
+        options: Options(
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          },
+          responseType: ResponseType.plain,
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
+        ),
+      );
+      var html = resp.data ?? '';
+      if (html.isEmpty) return '网页内容为空。';
+
+      // 1. 去除 script、style、nav、footer、header、aside 等无关标签及内容
+      html = html.replaceAll(RegExp(r'<script[\s\S]*?</script>', caseSensitive: false), '');
+      html = html.replaceAll(RegExp(r'<style[\s\S]*?</style>', caseSensitive: false), '');
+      html = html.replaceAll(RegExp(r'<nav[\s\S]*?</nav>', caseSensitive: false), '');
+      html = html.replaceAll(RegExp(r'<footer[\s\S]*?</footer>', caseSensitive: false), '');
+      html = html.replaceAll(RegExp(r'<header[\s\S]*?</header>', caseSensitive: false), '');
+      html = html.replaceAll(RegExp(r'<aside[\s\S]*?</aside>', caseSensitive: false), '');
+      html = html.replaceAll(RegExp(r'<noscript[\s\S]*?</noscript>', caseSensitive: false), '');
+
+      // 2. 将块级标签替换为换行
+      html = html.replaceAll(RegExp(r'</(p|div|br|li|h1|h2|h3|h4|h5|h6|tr)>', caseSensitive: false), '\n');
+
+      // 3. 去除所有剩余 HTML 标签
+      html = html.replaceAll(RegExp(r'<[^>]+>'), '');
+
+      // 4. HTML 实体解码
+      html = html
+          .replaceAll('&nbsp;', ' ')
+          .replaceAll('&amp;', '&')
+          .replaceAll('&lt;', '<')
+          .replaceAll('&gt;', '>')
+          .replaceAll('&quot;', '"')
+          .replaceAll('&#39;', "'")
+          .replaceAll(RegExp(r'&#\d+;'), '');
+
+      // 5. 压缩多余空白行和空格
+      final lines = html.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty);
+      var text = lines.join('\n');
+      text = text.replaceAll(RegExp(r'[ \t]+'), ' ');
+      text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+      // 6. 截断
+      if (text.length > maxLength) {
+        text = '${text.substring(0, maxLength)}\n\n（内容过长，已截断）';
+      }
+
+      return text.isEmpty ? '未能提取到网页正文内容。' : text;
+    } catch (e) {
+      return '网页读取失败：$e';
+    }
   }
 }
 
@@ -490,5 +592,32 @@ ToolDefinition buildWebSearchTool(HttpAgentService service) => ToolDefinition(
         }
         buf.writeln('\n请基于以上搜索结果回答用户问题，在回复末尾以"参考资料："列出主要来源。');
         return buf.toString();
+      },
+    );
+
+/// 内置网页正文读取工具定义（供 AgentService.run 注册使用）
+ToolDefinition buildWebFetchTool(HttpAgentService service) => ToolDefinition(
+      name: 'web_fetch',
+      description: '当需要读取某个具体网页的详细内容时使用。搜索得到链接后，'
+          '可以调用本工具读取网页正文，获取更详细的信息来回答用户问题。'
+          '每次只读取一个网页，建议选择最相关的3-5个网页读取。',
+      parameters: {
+        'type': 'object',
+        'properties': {
+          'url': {
+            'type': 'string',
+            'description': '要读取的网页URL，必须是完整的http/https链接',
+          },
+        },
+        'required': ['url'],
+      },
+      execute: (args) async {
+        final url = args['url']?.toString() ?? '';
+        if (url.isEmpty) return 'URL为空。';
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          return 'URL格式不正确，必须以http://或https://开头。';
+        }
+        final content = await service.fetchWebPage(url);
+        return '网页正文内容：\n$content';
       },
     );

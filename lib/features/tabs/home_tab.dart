@@ -292,7 +292,7 @@ class HomeTabState extends State<HomeTab> {
       if (agent != null) {
         // ── Agent 模式：自动判断是否需要搜索，工具循环 + 流式最终回复 ──
         final agentService = agent as HttpAgentService;
-        final tools = [buildWebSearchTool(agentService)];
+        final tools = [buildWebSearchTool(agentService), buildWebFetchTool(agentService)];
         final result = await agent.run(
           history: List.of(_messages),
           tools: tools,
@@ -311,7 +311,13 @@ class HomeTabState extends State<HomeTab> {
           onToolStart: (toolName) {
             if (!mounted) return;
             setState(() {
-              _thinkingText = toolName == 'web_search' ? '正在联网搜索…' : '正在调用工具…';
+              if (toolName == 'web_search') {
+                _thinkingText = '正在联网搜索…';
+              } else if (toolName == 'web_fetch') {
+                _thinkingText = '正在读取网页内容…';
+              } else {
+                _thinkingText = '正在调用工具…';
+              }
             });
           },
           onToolEnd: (toolName, result) {

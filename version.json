@@ -1,1 +1,1 @@
-{"versionName":"1.2.20","versionCode":73,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.20/app-release.apk","changelog":"联网搜索数据沉淀格式改版：沉淀主体改为搜索提炼内容（输入模型的上下文），信源链接作为备注折叠列在下方"}
+{"versionName":"1.2.21","versionCode":74,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.21/app-release.apk","changelog":"Agent模式搜索深度改造：添加网页正文读取工具，Agent可先搜索再读取网页正文基于真实内容回复；沉淀内容改为模型回复（真正的提炼），信源链接作为备注"}
