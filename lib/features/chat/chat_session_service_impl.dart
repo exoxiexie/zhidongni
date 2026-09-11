@@ -314,10 +314,11 @@ class ChatSessionServiceImpl implements ChatSessionService {
       }
       final conversationText = buf.toString();
 
-      // 调用 MemoryDistiller 做提炼
+      // 调用 MemoryDistiller 做提炼（手动提炼时 forceSave=true，强制保存）
       final success = await MemoryDistiller.distillAndSave(
         tenantId: _tenantId!,
         conversationText: conversationText,
+        forceSave: true,
       );
 
       // 提炼成功后，更新最后提炼的消息ID为最后一条消息的ID

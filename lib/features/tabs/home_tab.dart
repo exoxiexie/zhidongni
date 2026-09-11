@@ -282,7 +282,7 @@ class HomeTabState extends State<HomeTab> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('提炼完成，没有值得长期记住的内容')),
+          const SnackBar(content: Text('提炼失败，请稍后重试')),
         );
       }
     } catch (e) {

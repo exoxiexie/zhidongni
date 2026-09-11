@@ -38,11 +38,13 @@ class MemoryDistiller {
   /// 提炼一段对话并写入记忆层。
   ///
   /// - [conversationText]：对话文本（"【用户】…【智懂你】…"格式）
+  /// - [forceSave]：强制保存（手动提炼时使用），即使 AI 判断 has_memory=false 也保存
   /// - 已有记忆会作为去重依据传给模型；命中时更新旧记忆而非新建
   /// - 全程不抛异常：任何失败都静默降级（返回 false），不打扰对话
   static Future<bool> distillAndSave({
     required String tenantId,
     required String conversationText,
+    bool forceSave = false,
   }) async {
     try {
       // 已有记忆（id + 标题），用于去重合并
@@ -101,7 +103,9 @@ class MemoryDistiller {
       if (choices == null || choices.isEmpty) return false;
       final text = (choices[0] as Map)['message']?['content']?.toString() ?? '';
       final result = parseResult(text);
-      if (result == null || result['has_memory'] != true) return false;
+      if (result == null) return false;
+      // 自动提炼时，AI 判断 has_memory=false 则不保存；手动提炼（forceSave）时强制保存
+      if (result['has_memory'] != true && !forceSave) return false;
 
       // ── 合并更新：命中已有记忆则更新，否则新建 ──
       final updateId = result['update_id']?.toString() ?? '';
@@ -115,14 +119,27 @@ class MemoryDistiller {
         }
       }
 
-      final title = result['title']?.toString().trim() ?? '对话记忆';
+      final title = result['title']?.toString().trim().isNotEmpty == true
+          ? result['title']!.toString().trim()
+          : '对话记忆';
       final weight = int.tryParse(result['weight']?.toString() ?? '') ?? 50;
       final tags = _parseTags(result['tags']);
       final category =
           result['category']?.toString().trim().isNotEmpty == true
               ? result['category']!.toString().trim()
               : '未分类';
-      final content = result['content']?.toString().trim() ?? '';
+      var content = result['content']?.toString().trim() ?? '';
+
+      // 手动提炼（forceSave）时，如果 AI 没有输出内容，用对话摘要作为默认内容
+      if (forceSave && content.isEmpty) {
+        final summary = input.length > 500 ? '${input.substring(0, 500)}...' : input;
+        content = '## 对话摘要\n\n$summary';
+      }
+
+      // forceSave 时如果没有标签，给一个默认标签
+      if (forceSave && tags.isEmpty) {
+        tags.add('对话提炼');
+      }
 
       if (existingItem != null) {
         existingItem.title = title;
