@@ -9,6 +9,8 @@ import '../enterprise/enterprise_login_page.dart';
 import '../enterprise/enterprise_model.dart';
 import '../memory/memory_edit_page.dart';
 import '../storage/memory_store.dart';
+import '../data/public_data_detail_page.dart';
+import '../data/memory_detail_page.dart';
 
 class DatabaseTab extends StatefulWidget {
   const DatabaseTab({super.key});
@@ -615,8 +617,33 @@ class DatabaseTabState extends State<DatabaseTab> {
     );
   }
 
-  /// 打开数据模块详情页（占位）
+  /// 打开数据模块详情页
   void _openModuleDetail(_DataModule module) {
+    // 信息公开数据 → 进入5类数据大卡片详情页
+    if (module.title == '信息公开数据') {
+      final creditCode = _enterprise?.creditCode.isNotEmpty == true
+          ? _enterprise!.creditCode
+          : _auth?.enterpriseId ?? '';
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PublicDataDetailPage(creditCode: creditCode),
+        ),
+      );
+      return;
+    }
+    // 对话记忆数据 → 进入记忆列表页
+    if (module.title == '对话记忆数据') {
+      final creditCode = _enterprise?.creditCode.isNotEmpty == true
+          ? _enterprise!.creditCode
+          : _auth?.enterpriseId ?? '';
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MemoryDetailPage(tenantId: creditCode),
+        ),
+      );
+      return;
+    }
+    // 其他模块 → 占位页
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => Scaffold(
