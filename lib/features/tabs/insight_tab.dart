@@ -155,6 +155,16 @@ class PresetCommandsPage extends StatelessWidget {
   /// 预设指令分类和内容
   List<PresetCommandCategory> get _categories => [
     PresetCommandCategory(
+      name: '热门指令',
+      icon: Icons.local_fire_department_outlined,
+      color: const Color(0xFFF97316),
+      commands: [
+        '帮我全面分析一下我公司当前的经营状况和潜在风险，给出 actionable 的改进建议',
+        '根据我公司的数据，生成一份本周的智能运营简报，重点突出关键指标变化和需要关注的事项',
+        '帮我检查一下我公司有没有需要立即处理的风险预警，包括工商、税务、司法和信用方面',
+      ],
+    ),
+    PresetCommandCategory(
       name: '经营分析',
       icon: Icons.analytics_outlined,
       color: const Color(0xFF2563EB),
