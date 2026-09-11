@@ -1,1 +1,1 @@
-{"versionName":"1.2.27","versionCode":80,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.27/zhidongni-v1.2.27.apk","changelog":"提炼失败时显示具体错误信息，方便排查问题"}
+{"versionName":"1.2.28","versionCode":81,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.28/zhidongni-v1.2.28.apk","changelog":"修复提炼为记忆报错Cannot add to an unmodifiable list"}

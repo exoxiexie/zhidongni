@@ -205,7 +205,7 @@ class MemoryDistiller {
 
   /// 解析 tags 字段（字符串或数组均可）
   static List<String> _parseTags(dynamic value) {
-    if (value == null) return const [];
+    if (value == null) return [];
     if (value is List) {
       return value
           .map((e) => e.toString().trim())
