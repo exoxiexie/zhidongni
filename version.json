@@ -1,1 +1,1 @@
-{"versionName":"1.2.25","versionCode":78,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.25/zhidongni-v1.2.25.apk","changelog":"修复手动提炼为记忆后提示\"没有值得长期记住的内容\"的问题，手动提炼强制保存结果"}
+{"versionName":"1.2.26","versionCode":79,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.26/zhidongni-v1.2.26.apk","changelog":"修复手动提炼为记忆报错问题，forceSave模式下即使AI返回格式不对也强制保存"}

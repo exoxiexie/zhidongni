@@ -18,6 +18,7 @@ library;
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../contracts/api_config.dart';
 import '../storage/memory_store.dart';
@@ -103,12 +104,12 @@ class MemoryDistiller {
       if (choices == null || choices.isEmpty) return false;
       final text = (choices[0] as Map)['message']?['content']?.toString() ?? '';
       final result = parseResult(text);
-      if (result == null) return false;
-      // 自动提炼时，AI 判断 has_memory=false 则不保存；手动提炼（forceSave）时强制保存
-      if (result['has_memory'] != true && !forceSave) return false;
+      // 自动提炼时，解析失败或 has_memory=false 则不保存；手动提炼（forceSave）时强制保存
+      if (result == null && !forceSave) return false;
+      if (result != null && result['has_memory'] != true && !forceSave) return false;
 
       // ── 合并更新：命中已有记忆则更新，否则新建 ──
-      final updateId = result['update_id']?.toString() ?? '';
+      final updateId = result?['update_id']?.toString() ?? '';
       MemoryItem? existingItem;
       if (updateId.isNotEmpty) {
         for (final m in existing) {
@@ -119,18 +120,18 @@ class MemoryDistiller {
         }
       }
 
-      final title = result['title']?.toString().trim().isNotEmpty == true
-          ? result['title']!.toString().trim()
+      final title = result?['title']?.toString().trim().isNotEmpty == true
+          ? result!['title']!.toString().trim()
           : '对话记忆';
-      final weight = int.tryParse(result['weight']?.toString() ?? '') ?? 50;
-      final tags = _parseTags(result['tags']);
+      final weight = int.tryParse(result?['weight']?.toString() ?? '') ?? 50;
+      final tags = _parseTags(result?['tags']);
       final category =
-          result['category']?.toString().trim().isNotEmpty == true
-              ? result['category']!.toString().trim()
+          result?['category']?.toString().trim().isNotEmpty == true
+              ? result!['category']!.toString().trim()
               : '未分类';
-      var content = result['content']?.toString().trim() ?? '';
+      var content = result?['content']?.toString().trim() ?? '';
 
-      // 手动提炼（forceSave）时，如果 AI 没有输出内容，用对话摘要作为默认内容
+      // 手动提炼（forceSave）时，如果 AI 没有输出内容或解析失败，用对话摘要作为默认内容
       if (forceSave && content.isEmpty) {
         final summary = input.length > 500 ? '${input.substring(0, 500)}...' : input;
         content = '## 对话摘要\n\n$summary';
@@ -161,8 +162,9 @@ class MemoryDistiller {
         await MemoryStore.save(tenantId, item);
       }
       return true;
-    } catch (_) {
-      // 提炼失败静默降级，不影响对话
+    } catch (e) {
+      // 提炼失败打印错误日志，方便排查
+      debugPrint('MemoryDistiller 提炼失败: $e');
       return false;
     }
   }
