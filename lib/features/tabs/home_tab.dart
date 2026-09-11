@@ -149,6 +149,7 @@ class HomeTabState extends State<HomeTab> {
       }
 
       widget.chatService.setEnterpriseContext(buf.toString());
+      widget.chatService.setTenantId(ent.creditCode);
       widget.agentService?.setEnterpriseContext(buf.toString());
     } catch (e) {
       debugPrint('设置企业上下文失败: $e');
