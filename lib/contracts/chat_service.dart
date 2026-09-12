@@ -78,16 +78,7 @@ class ChatModel {
 
 /// 当前支持的模型列表
 const List<ChatModel> kChatModels = [
-  ChatModel(
-    id: 'deepseek-v4.1-flash-expires-on-0910',
-    label: 'DeepSeek V4.1 Flash（内测·9.10到期）',
-  ),
-  ChatModel(id: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash'),
-  ChatModel(id: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro'),
-  ChatModel(
-    id: 'deepseek-v4-flash-vision-exp',
-    label: 'DeepSeek V4 Flash Vision Expert',
-  ),
+  ChatModel(id: 'deepseek-flash', label: 'DeepSeek V4.1 Flash'),
 ];
 
 /// 一条联网搜索来源
@@ -190,7 +181,7 @@ abstract class ChatService {
   /// 返回值始终为最终完整正文（兼容非流式调用方）。
   Future<String> sendMessage(
     List<ChatMessage> history, {
-    String model = 'deepseek-v4-flash-vision-exp',
+    String model = 'deepseek-flash',
     bool search = false,
     ChatStreamCallback? onDelta,
   });

@@ -1,1 +1,1 @@
-{"versionName":"1.2.29","versionCode":82,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.29/zhidongni-v1.2.29.apk","changelog":"提炼内容不再被截短（输入12000字/输出4096tokens），手动提炼标签显示为手动提炼"}
+{"versionName":"1.2.30","versionCode":83,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.30/zhidongni-v1.2.30.apk","changelog":"统一使用DeepSeek V4.1 Flash（模型ID：deepseek-flash），删除旧的四个模型"}

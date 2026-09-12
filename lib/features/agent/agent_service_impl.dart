@@ -19,7 +19,7 @@ import '../storage/search_data_store.dart';
 
 class HttpAgentService implements AgentService {
   /// 搜索用模型
-  static const String _searchModel = 'deepseek-v4-flash';
+  static const String _searchModel = 'deepseek-flash';
 
   final Dio _dio;
 
@@ -57,7 +57,7 @@ class HttpAgentService implements AgentService {
   Future<AgentResult> run({
     required List<ChatMessage> history,
     List<ToolDefinition> tools = const [],
-    String model = 'deepseek-v4-flash',
+    String model = 'deepseek-flash',
     int maxSteps = 8,
     Duration timeout = const Duration(seconds: 90),
     AgentStreamCallback? onDelta,

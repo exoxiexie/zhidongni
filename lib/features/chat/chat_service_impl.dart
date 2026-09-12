@@ -20,7 +20,7 @@ import '../storage/search_data_store.dart';
 /// 真实 API Key 仅存于服务端环境变量，App 端只持代理令牌。
 class HttpChatService implements ChatService {
   /// 搜索用模型
-  static const String _searchModel = 'deepseek-v4-flash';
+  static const String _searchModel = 'deepseek-flash';
 
   /// 网页抓取请求头（模拟移动端浏览器，降低被站点拒绝概率）
   static const String _fetchUserAgent =
@@ -58,7 +58,7 @@ class HttpChatService implements ChatService {
   @override
   Future<String> sendMessage(
     List<ChatMessage> history, {
-    String model = 'deepseek-v4-flash-vision-exp',
+    String model = 'deepseek-flash',
     bool search = false,
     ChatStreamCallback? onDelta,
   }) async {

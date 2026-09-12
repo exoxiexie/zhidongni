@@ -155,7 +155,7 @@ abstract class AgentService {
   Future<AgentResult> run({
     required List<ChatMessage> history,
     List<ToolDefinition> tools = const [],
-    String model = 'deepseek-v4-flash',
+    String model = 'deepseek-flash',
     int maxSteps = 8,
     Duration timeout = const Duration(seconds: 90),
     AgentStreamCallback? onDelta,

@@ -311,8 +311,8 @@ class HomeTabState extends State<HomeTab> {
     _controller.text = text;
   }
 
-  /// 当前选中的对话模型（默认 Vision Expert，多模态）
-  ChatModel _selectedModel = kChatModels[3];
+  /// 当前选中的对话模型（默认 DeepSeek V4.1 Flash，原生多模态）
+  ChatModel _selectedModel = kChatModels[0];
 
   /// 发送中提示文案（普通思考 / 搜索中 / 读取网页）
   String _thinkingText = '正在思考…';

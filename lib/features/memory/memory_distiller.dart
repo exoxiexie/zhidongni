@@ -28,8 +28,8 @@ class MemoryDistiller {
   /// 最近一次错误信息（供 UI 层展示具体错误原因）
   static String? lastError;
 
-  /// 提炼用模型：V4 Flash（快、便宜，适合结构化提炼任务）
-  static const String _model = 'deepseek-v4-flash';
+  /// 提炼用模型：DeepSeek V4.1 Flash（快、便宜，适合结构化提炼任务）
+  static const String _model = 'deepseek-flash';
 
   /// 输入对话文本截断上限（字符数，控制 token 成本）
   static const int _maxInputChars = 12000;
