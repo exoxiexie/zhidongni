@@ -7,10 +7,13 @@ library;
 import 'package:flutter/material.dart';
 
 class InsightTab extends StatelessWidget {
-  /// 打开对话页回调（点击顶部"对话"卡片时触发）
+  /// 打开对话页回调（点击顶部"对话"板块时触发）
   final VoidCallback? onOpenChat;
 
-  const InsightTab({super.key, this.onOpenChat});
+  /// 打开业务智能体详情页回调（点击下方业务智能体时触发，传入智能体名称）
+  final void Function(String title)? onOpenAgent;
+
+  const InsightTab({super.key, this.onOpenChat, this.onOpenAgent});
 
   @override
   Widget build(BuildContext context) {
@@ -46,99 +49,63 @@ class InsightTab extends StatelessWidget {
                   iconBg: const Color(0xFF2563EB),
                   title: '贷款',
                   subtitle: '融资、贷款、资金周转评估',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '贷款')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('贷款'),
                 ),
                 _InsightItem(
                   icon: Icons.business_outlined,
                   iconBg: const Color(0xFF059669),
                   title: '工商',
                   subtitle: '企业工商登记信息',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '工商')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('工商'),
                 ),
                 _InsightItem(
                   icon: Icons.receipt_long_outlined,
                   iconBg: const Color(0xFFF97316),
                   title: '税务',
                   subtitle: '税务申报、筹划与合规',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '税务')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('税务'),
                 ),
                 _InsightItem(
                   icon: Icons.calculate_outlined,
                   iconBg: const Color(0xFF0EA5E9),
                   title: '财务',
                   subtitle: '财务核算、分析与报表',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '财务')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('财务'),
                 ),
                 _InsightItem(
                   icon: Icons.copyright_outlined,
                   iconBg: const Color(0xFF7C3AED),
                   title: '知识产权',
                   subtitle: '商标、专利与版权保护',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '知识产权')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('知识产权'),
                 ),
                 _InsightItem(
                   icon: Icons.assignment_outlined,
                   iconBg: const Color(0xFF14B8A6),
                   title: '政策申报',
                   subtitle: '惠企政策匹配与申报',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '政策申报')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('政策申报'),
                 ),
                 _InsightItem(
                   icon: Icons.gavel,
                   iconBg: const Color(0xFF6366F1),
                   title: '法律',
                   subtitle: '合同审查与法务咨询',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '法律')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('法律'),
                 ),
                 _InsightItem(
                   icon: Icons.health_and_safety_outlined,
                   iconBg: const Color(0xFFEA6668),
                   title: '社保',
                   subtitle: '社保、公积金管理',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '社保')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('社保'),
                 ),
                 _InsightItem(
                   icon: Icons.local_shipping_outlined,
                   iconBg: const Color(0xFFF59E0B),
                   title: '供应链',
                   subtitle: '上下游协同与风险监测',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '供应链')),
-                    );
-                  },
+                  onTap: () => onOpenAgent?.call('供应链'),
                 ),
               ]),
               const SizedBox(height: 24),
@@ -387,6 +354,17 @@ class _PlaceholderPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+        // 左上角：向左尖括号返回（与首页顶部卡片箭头同款样式）
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 16,
+            color: Color(0xFF1B3A5C),
+          ),
+          onPressed: () => Navigator.of(context).maybePop(),
+          tooltip: '返回',
+        ),
       ),
       body: const Center(
         child: Text(

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
+import '../chat/business_agent_page.dart';
 import '../chat/chat_page.dart';
 import '../tabs/database_tab.dart';
 import '../tabs/files_tab.dart';
@@ -45,10 +46,23 @@ class _ShellPageState extends State<ShellPage> {
     );
   }
 
+  /// 打开业务智能体详情页
+  void openAgent(String title) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BusinessAgentPage(
+          title: title,
+          chatService: widget.chatService!,
+          agentService: widget.agentService,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
-      InsightTab(onOpenChat: openChat),
+      InsightTab(onOpenChat: openChat, onOpenAgent: openAgent),
       DatabaseTab(key: _databaseTabKey),
       const FilesTab(),
       const ProfileTab(),

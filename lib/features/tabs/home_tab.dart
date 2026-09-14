@@ -17,6 +17,7 @@ import '../../contracts/chat_session_service.dart';
 import '../../core/di/service_locator.dart';
 import '../agent/agent_service_impl.dart';
 import '../chat/attachment_parser.dart';
+import '../chat/chat_input_bar.dart';
 import '../chat/preset_commands_page.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
@@ -1006,150 +1007,27 @@ class HomeTabState extends State<HomeTab> {
   }
 
   Widget _buildInputBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_pendingAttachment != null) _buildAttachmentChip(),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0x0F000000),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 2),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<ChatModel>(
-                        value: _selectedModel,
-                        isDense: true,
-                        padding: EdgeInsets.zero,
-                        dropdownColor:
-                            Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        icon: const Icon(Icons.arrow_drop_down,
-                            size: 18, color: Color(0x881A1B1C)),
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xCC1A1B1C)),
-                        items: kChatModels.map((m) {
-                          return DropdownMenuItem<ChatModel>(
-                            value: m,
-                            child: Text(m.label,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12)),
-                          );
-                        }).toList(),
-                        onChanged: _isLoading
-                            ? null
-                            : (m) {
-                                if (m != null) {
-                                  setState(() => _selectedModel = m);
-                                }
-                              },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFeatureButton(
-                    icon: Icons.computer,
-                    label: '连接电脑',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('连接电脑功能开发中')),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFeatureButton(
-                    icon: Icons.extension,
-                    label: '技能选择',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('技能选择功能开发中')),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0x0F000000),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.fromLTRB(14, 8, 8, 4),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _controller,
-                    minLines: 2,
-                    maxLines: 5,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _send(),
-                    style: const TextStyle(fontSize: 15),
-                    decoration: const InputDecoration(
-                      hintText: '输入你的问题…',
-                      hintStyle: TextStyle(color: Color(0x661A1B1C)),
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 4),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed:
-                            _isLoading ? null : _showAttachmentSheet,
-                        icon: const Icon(
-                          Icons.add_circle_outline,
-                          size: 24,
-                          color: Color(0x991A1B1C),
-                        ),
-                        tooltip: '添加附件',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                            minWidth: 32, minHeight: 32),
-                      ),
-                      const Spacer(),
-                      ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _controller,
-                        builder: (context, value, _) {
-                          final canSend = !_isLoading &&
-                              (value.text.trim().isNotEmpty ||
-                                  _pendingAttachment != null);
-                          return IconButton.filled(
-                            onPressed: canSend ? _send : null,
-                            icon: const Icon(Icons.arrow_upward, size: 22),
-                            style: IconButton.styleFrom(
-                              backgroundColor: canSend
-                                  ? const Color(0xFF5B7FD4)
-                                  : const Color(0x331A1B1C),
-                              foregroundColor: Colors.white,
-                              shape: const CircleBorder(),
-                            ),
-                            tooltip: '发送',
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ChatInputBar(
+      controller: _controller,
+      isLoading: _isLoading,
+      pendingAttachment:
+          _pendingAttachment != null ? _buildAttachmentChip() : null,
+      selectedModel: _selectedModel,
+      onModelChanged: (m) {
+        setState(() => _selectedModel = m);
+      },
+      onAddAttachment: _showAttachmentSheet,
+      onSend: _send,
+      onConnectComputer: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('连接电脑功能开发中')),
+        );
+      },
+      onSkillSelect: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('技能选择功能开发中')),
+        );
+      },
     );
   }
 }
