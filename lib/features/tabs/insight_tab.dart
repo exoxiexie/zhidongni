@@ -21,13 +21,39 @@ class InsightTab extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // 顶部大卡片：对话 | 洞察 并排
+              // 顶部大卡片：对话 | 洞察 上下两个板块（整体浅蓝渐变）
               _buildTopCard(context),
               const SizedBox(height: 16),
-              // 功能栏目列表
+              // 业务智能体栏目
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '业务智能体',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               _buildSection([
                 _InsightItem(
                   icon: Icons.account_balance_outlined,
+                  iconBg: const Color(0xFF2563EB),
+                  title: '贷款',
+                  subtitle: '融资、贷款、资金周转评估',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '贷款')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.business_outlined,
                   iconBg: const Color(0xFF059669),
                   title: '工商',
                   subtitle: '企业工商登记信息',
@@ -38,13 +64,79 @@ class InsightTab extends StatelessWidget {
                   },
                 ),
                 _InsightItem(
-                  icon: Icons.warning_amber_rounded,
-                  iconBg: const Color(0xFFEA6668),
-                  title: '风险预警',
-                  subtitle: '工商、税务、司法等企业自身风险监测',
+                  icon: Icons.receipt_long_outlined,
+                  iconBg: const Color(0xFFF97316),
+                  title: '税务',
+                  subtitle: '税务申报、筹划与合规',
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '风险预警')),
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '税务')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.calculate_outlined,
+                  iconBg: const Color(0xFF0EA5E9),
+                  title: '财务',
+                  subtitle: '财务核算、分析与报表',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '财务')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.copyright_outlined,
+                  iconBg: const Color(0xFF7C3AED),
+                  title: '知识产权',
+                  subtitle: '商标、专利与版权保护',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '知识产权')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.assignment_outlined,
+                  iconBg: const Color(0xFF14B8A6),
+                  title: '政策申报',
+                  subtitle: '惠企政策匹配与申报',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '政策申报')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.gavel,
+                  iconBg: const Color(0xFF6366F1),
+                  title: '法律',
+                  subtitle: '合同审查与法务咨询',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '法律')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.health_and_safety_outlined,
+                  iconBg: const Color(0xFFEA6668),
+                  title: '社保',
+                  subtitle: '社保、公积金管理',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '社保')),
+                    );
+                  },
+                ),
+                _InsightItem(
+                  icon: Icons.local_shipping_outlined,
+                  iconBg: const Color(0xFFF59E0B),
+                  title: '供应链',
+                  subtitle: '上下游协同与风险监测',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '供应链')),
                     );
                   },
                 ),
@@ -57,30 +149,25 @@ class InsightTab extends StatelessWidget {
     );
   }
 
-  /// 顶部大卡片：对话 | 洞察 上下两个板块
+  /// 顶部大卡片：对话 | 洞察 上下两个板块（整体浅蓝渐变撑满，无白边）
   Widget _buildTopCard(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFBFD9F2), Color(0xFF8FB8E0)],
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          // 上：对话板块（浅蓝渐变，左浅右略深）
+          // 上：对话板块
           GestureDetector(
             onTap: onOpenChat,
-            child: Container(
-              margin: const EdgeInsets.all(2),
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [Color(0xFFBFD9F2), Color(0xFF8FB8E0)],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
               child: Row(
                 children: [
                   // 图标
@@ -126,10 +213,10 @@ class InsightTab extends StatelessWidget {
               ),
             ),
           ),
-          // 分隔线
+          // 分隔线（白色半透明）
           const Padding(
             padding: EdgeInsets.only(left: 56),
-            child: Divider(height: 1, color: Color(0xFFE4E3DD)),
+            child: Divider(height: 1, color: Color(0x59FFFFFF)),
           ),
           // 下：洞察板块
           InkWell(
@@ -150,8 +237,8 @@ class InsightTab extends StatelessWidget {
                       color: const Color(0xFF5B7FD4),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child:
-                        const Icon(Icons.auto_awesome, size: 20, color: Colors.white),
+                    child: const Icon(Icons.auto_awesome,
+                        size: 20, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
                   // 标题和副标题
@@ -164,15 +251,15 @@ class InsightTab extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF1A1B1C),
+                            color: Color(0xFF1B3A5C),
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           '基于企业数据生成分析报告',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6B7280),
+                            color: const Color(0xFF1B3A5C).withOpacity(0.75),
                           ),
                         ),
                       ],
@@ -182,7 +269,7 @@ class InsightTab extends StatelessWidget {
                   const Icon(
                     Icons.arrow_forward_ios,
                     size: 14,
-                    color: Color(0xFFC4C4C4),
+                    color: Color(0xFF1B3A5C),
                   ),
                 ],
               ),
