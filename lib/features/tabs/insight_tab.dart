@@ -101,7 +101,7 @@ class InsightTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '与智懂你 AI 管家对话，支持联网搜索与文件解析',
+                    '与智懂你 AI 管家对话',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.8),

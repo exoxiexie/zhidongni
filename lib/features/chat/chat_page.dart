@@ -178,6 +178,8 @@ class _ChatPageState extends State<ChatPage> {
         centerTitle: true,
         elevation: 0,
         automaticallyImplyLeading: false,
+        // leading 区域较宽（返回箭头+双横杠），必须显式设置宽度，否则被裁剪导致点击错位
+        leadingWidth: 122,
         // 左上角：返回箭头 + 双横杠菜单（向右偏移，与箭头保持合适间距）
         leading: Padding(
           padding: const EdgeInsets.only(left: 4),
