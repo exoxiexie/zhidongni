@@ -1,12 +1,13 @@
 /// 懂你 Tab · 对话入口 + 功能栏目列表
 ///
 /// 顶部：对话入口卡片（点击进入对话页）
-/// 下方：深入洞察、风险预警等功能栏目
+/// 下方：业务智能体栏目（右上角齿轮可管理卡片开关）
 library;
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class InsightTab extends StatelessWidget {
+class InsightTab extends StatefulWidget {
   /// 打开对话页回调（点击顶部"对话"板块时触发）
   final VoidCallback? onOpenChat;
 
@@ -16,7 +17,151 @@ class InsightTab extends StatelessWidget {
   const InsightTab({super.key, this.onOpenChat, this.onOpenAgent});
 
   @override
+  State<InsightTab> createState() => _InsightTabState();
+}
+
+class _InsightTabState extends State<InsightTab> {
+  /// 全部业务智能体定义（顺序即展示顺序）
+  static const List<_AgentDef> _agents = [
+    _AgentDef(Icons.account_balance_outlined, Color(0xFF2563EB), '贷款',
+        '融资、贷款、资金周转评估'),
+    _AgentDef(Icons.business_outlined, Color(0xFF059669), '工商',
+        '企业工商登记信息'),
+    _AgentDef(Icons.receipt_long_outlined, Color(0xFFF97316), '税务',
+        '税务申报、筹划与合规'),
+    _AgentDef(Icons.balance_outlined, Color(0xFF0D9488), '司法',
+        '司法诉讼与案件信息'),
+    _AgentDef(Icons.verified_outlined, Color(0xFF0891B2), '信用',
+        '企业信用评级与风险'),
+    _AgentDef(Icons.calculate_outlined, Color(0xFF0EA5E9), '财务',
+        '财务核算、分析与报表'),
+    _AgentDef(Icons.copyright_outlined, Color(0xFF7C3AED), '知识产权',
+        '商标、专利与版权保护'),
+    _AgentDef(Icons.assignment_outlined, Color(0xFF14B8A6), '政策申报',
+        '惠企政策匹配与申报'),
+    _AgentDef(Icons.gavel, Color(0xFF6366F1), '法律', '合同审查与法务咨询'),
+    _AgentDef(Icons.health_and_safety_outlined, Color(0xFFEA6668), '社保',
+        '社保、公积金管理'),
+    _AgentDef(Icons.local_shipping_outlined, Color(0xFFF59E0B), '供应链',
+        '上下游协同与风险监测'),
+  ];
+
+  /// 智能体显示开关（title -> 是否显示），默认全部开启
+  final Map<String, bool> _enabled = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEnabled();
+  }
+
+  Future<void> _loadEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    final map = <String, bool>{};
+    for (final a in _agents) {
+      map[a.title] = prefs.getBool('agent_enabled_${a.title}') ?? true;
+    }
+    if (mounted) {
+      setState(() {
+        _enabled..clear()..addAll(map);
+      });
+    }
+  }
+
+  bool _isEnabled(String title) => _enabled[title] ?? true;
+
+  Future<void> _setEnabled(String title, bool value) async {
+    setState(() => _enabled[title] = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('agent_enabled_$title', value);
+  }
+
+  /// 打开业务智能体管理面板（齿轮）
+  void _showManageSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 18, 16, 4),
+                  child: Text(
+                    '管理业务智能体',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1B1C),
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(
+                    '关闭后该智能体卡片将不在首页显示',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  ),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    itemCount: _agents.length,
+                    itemBuilder: (context, i) {
+                      final a = _agents[i];
+                      final enabled = _enabled[a.title] ?? true;
+                      return ListTile(
+                        leading: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: a.iconBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(a.icon, size: 18, color: Colors.white),
+                        ),
+                        title: Text(
+                          a.title,
+                          style: const TextStyle(
+                              fontSize: 15, color: Color(0xFF1A1B1C)),
+                        ),
+                        subtitle: Text(
+                          a.subtitle,
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xFF9CA3AF)),
+                        ),
+                        trailing: Switch(
+                          value: enabled,
+                          activeColor: const Color(0xFF5B7FD4),
+                          onChanged: (v) {
+                            setSheetState(() => _enabled[a.title] = v);
+                            _setEnabled(a.title, v);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 按开关状态过滤需要显示的业务智能体
+    final visibleAgents = _agents.where((a) => _isEnabled(a.title)).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F3EE),
       body: SafeArea(
@@ -27,100 +172,46 @@ class InsightTab extends StatelessWidget {
               // 顶部大卡片：对话 | 洞察 上下两个板块（整体浅蓝渐变）
               _buildTopCard(context),
               const SizedBox(height: 16),
-              // 业务智能体栏目
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '业务智能体',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF9CA3AF),
+              // 业务智能体栏目标题行（右侧齿轮管理开关）
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Text(
+                      '业务智能体',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF9CA3AF),
+                      ),
                     ),
-                  ),
+                    const Spacer(),
+                    // 细齿轮：管理业务智能体卡片开关
+                    InkWell(
+                      onTap: _showManageSheet,
+                      borderRadius: BorderRadius.circular(8),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.settings_outlined,
+                          size: 18,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
               _buildSection([
-                _InsightItem(
-                  icon: Icons.account_balance_outlined,
-                  iconBg: const Color(0xFF2563EB),
-                  title: '贷款',
-                  subtitle: '融资、贷款、资金周转评估',
-                  onTap: () => onOpenAgent?.call('贷款'),
-                ),
-                _InsightItem(
-                  icon: Icons.business_outlined,
-                  iconBg: const Color(0xFF059669),
-                  title: '工商',
-                  subtitle: '企业工商登记信息',
-                  onTap: () => onOpenAgent?.call('工商'),
-                ),
-                _InsightItem(
-                  icon: Icons.receipt_long_outlined,
-                  iconBg: const Color(0xFFF97316),
-                  title: '税务',
-                  subtitle: '税务申报、筹划与合规',
-                  onTap: () => onOpenAgent?.call('税务'),
-                ),
-                _InsightItem(
-                  icon: Icons.balance_outlined,
-                  iconBg: const Color(0xFF0D9488),
-                  title: '司法',
-                  subtitle: '司法诉讼与案件信息',
-                  onTap: () => onOpenAgent?.call('司法'),
-                ),
-                _InsightItem(
-                  icon: Icons.verified_outlined,
-                  iconBg: const Color(0xFF0891B2),
-                  title: '信用',
-                  subtitle: '企业信用评级与风险',
-                  onTap: () => onOpenAgent?.call('信用'),
-                ),
-                _InsightItem(
-                  icon: Icons.calculate_outlined,
-                  iconBg: const Color(0xFF0EA5E9),
-                  title: '财务',
-                  subtitle: '财务核算、分析与报表',
-                  onTap: () => onOpenAgent?.call('财务'),
-                ),
-                _InsightItem(
-                  icon: Icons.copyright_outlined,
-                  iconBg: const Color(0xFF7C3AED),
-                  title: '知识产权',
-                  subtitle: '商标、专利与版权保护',
-                  onTap: () => onOpenAgent?.call('知识产权'),
-                ),
-                _InsightItem(
-                  icon: Icons.assignment_outlined,
-                  iconBg: const Color(0xFF14B8A6),
-                  title: '政策申报',
-                  subtitle: '惠企政策匹配与申报',
-                  onTap: () => onOpenAgent?.call('政策申报'),
-                ),
-                _InsightItem(
-                  icon: Icons.gavel,
-                  iconBg: const Color(0xFF6366F1),
-                  title: '法律',
-                  subtitle: '合同审查与法务咨询',
-                  onTap: () => onOpenAgent?.call('法律'),
-                ),
-                _InsightItem(
-                  icon: Icons.health_and_safety_outlined,
-                  iconBg: const Color(0xFFEA6668),
-                  title: '社保',
-                  subtitle: '社保、公积金管理',
-                  onTap: () => onOpenAgent?.call('社保'),
-                ),
-                _InsightItem(
-                  icon: Icons.local_shipping_outlined,
-                  iconBg: const Color(0xFFF59E0B),
-                  title: '供应链',
-                  subtitle: '上下游协同与风险监测',
-                  onTap: () => onOpenAgent?.call('供应链'),
-                ),
+                for (final a in visibleAgents)
+                  _InsightItem(
+                    icon: a.icon,
+                    iconBg: a.iconBg,
+                    title: a.title,
+                    subtitle: a.subtitle,
+                    onTap: () => widget.onOpenAgent?.call(a.title),
+                  ),
               ]),
               const SizedBox(height: 24),
             ],
@@ -146,7 +237,7 @@ class InsightTab extends StatelessWidget {
         children: [
           // 上：对话板块
           GestureDetector(
-            onTap: onOpenChat,
+            onTap: widget.onOpenChat,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               child: Row(
@@ -388,4 +479,14 @@ class _PlaceholderPage extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 业务智能体定义（图标、配色、名称、副标题）
+class _AgentDef {
+  final IconData icon;
+  final Color iconBg;
+  final String title;
+  final String subtitle;
+
+  const _AgentDef(this.icon, this.iconBg, this.title, this.subtitle);
 }
