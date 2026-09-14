@@ -25,25 +25,21 @@ class _InsightTabState extends State<InsightTab> {
   static const List<_AgentDef> _agents = [
     _AgentDef(Icons.account_balance_outlined, Color(0xFF2563EB), '贷款',
         '融资、贷款、资金周转评估'),
-    _AgentDef(Icons.business_outlined, Color(0xFF059669), '工商',
-        '企业工商登记信息'),
-    _AgentDef(Icons.receipt_long_outlined, Color(0xFFF97316), '税务',
-        '税务申报、筹划与合规'),
-    _AgentDef(Icons.balance_outlined, Color(0xFF0D9488), '司法',
-        '司法诉讼与案件信息'),
-    _AgentDef(Icons.verified_outlined, Color(0xFF0891B2), '信用',
-        '企业信用评级与风险'),
-    _AgentDef(Icons.calculate_outlined, Color(0xFF0EA5E9), '财务',
-        '财务核算、分析与报表'),
-    _AgentDef(Icons.copyright_outlined, Color(0xFF7C3AED), '知识产权',
-        '商标、专利与版权保护'),
-    _AgentDef(Icons.assignment_outlined, Color(0xFF14B8A6), '政策申报',
-        '惠企政策匹配与申报'),
+    _AgentDef(Icons.business_outlined, Color(0xFF059669), '工商', '企业工商登记信息'),
+    _AgentDef(
+        Icons.receipt_long_outlined, Color(0xFFF97316), '税务', '税务申报、筹划与合规'),
+    _AgentDef(Icons.balance_outlined, Color(0xFF0D9488), '司法', '司法诉讼与案件信息'),
+    _AgentDef(Icons.verified_outlined, Color(0xFF0891B2), '信用', '企业信用评级与风险'),
+    _AgentDef(Icons.calculate_outlined, Color(0xFF0EA5E9), '财务', '财务核算、分析与报表'),
+    _AgentDef(
+        Icons.copyright_outlined, Color(0xFF7C3AED), '知识产权', '商标、专利与版权保护'),
+    _AgentDef(
+        Icons.assignment_outlined, Color(0xFF14B8A6), '政策申报', '惠企政策匹配与申报'),
     _AgentDef(Icons.gavel, Color(0xFF6366F1), '法律', '合同审查与法务咨询'),
-    _AgentDef(Icons.health_and_safety_outlined, Color(0xFFEA6668), '社保',
-        '社保、公积金管理'),
-    _AgentDef(Icons.local_shipping_outlined, Color(0xFFF59E0B), '供应链',
-        '上下游协同与风险监测'),
+    _AgentDef(
+        Icons.health_and_safety_outlined, Color(0xFFEA6668), '社保', '社保、公积金管理'),
+    _AgentDef(
+        Icons.local_shipping_outlined, Color(0xFFF59E0B), '供应链', '上下游协同与风险监测'),
   ];
 
   /// 智能体显示开关（title -> 是否显示），默认全部开启
@@ -63,7 +59,9 @@ class _InsightTabState extends State<InsightTab> {
     }
     if (mounted) {
       setState(() {
-        _enabled..clear()..addAll(map);
+        _enabled
+          ..clear()
+          ..addAll(map);
       });
     }
   }
@@ -235,53 +233,57 @@ class _InsightTabState extends State<InsightTab> {
       ),
       child: Column(
         children: [
-          // 上：对话板块
-          GestureDetector(
+          // 上：对话板块（InkWell 整块区域可点，含空白处）
+          InkWell(
             onTap: widget.onOpenChat,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              child: Row(
-                children: [
-                  // 图标
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.55),
-                      borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                child: Row(
+                  children: [
+                    // 图标
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.chat_bubble_outline,
+                          size: 22, color: Color(0xFF1B3A5C)),
                     ),
-                    child: const Icon(Icons.chat_bubble_outline,
-                        size: 22, color: Color(0xFF1B3A5C)),
-                  ),
-                  const SizedBox(width: 12),
-                  // 标题和小字
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '对话',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1B3A5C),
+                    const SizedBox(width: 12),
+                    // 标题和小字
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '对话',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1B3A5C),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '与智懂你 AI 管家对话',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: const Color(0xFF1B3A5C).withOpacity(0.75),
+                          const SizedBox(height: 3),
+                          Text(
+                            '与智懂你 AI 管家对话',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: const Color(0xFF1B3A5C).withOpacity(0.75),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  // 右侧箭头
-                  const Icon(Icons.arrow_forward_ios,
-                      size: 16, color: Color(0xFF1B3A5C)),
-                ],
+                    // 右侧箭头
+                    const Icon(Icons.arrow_forward_ios,
+                        size: 16, color: Color(0xFF1B3A5C)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -294,7 +296,8 @@ class _InsightTabState extends State<InsightTab> {
           InkWell(
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '洞察')),
+                MaterialPageRoute(
+                    builder: (_) => const _PlaceholderPage(title: '洞察')),
               );
             },
             child: Padding(
