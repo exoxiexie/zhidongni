@@ -66,6 +66,20 @@ class InsightTab extends StatelessWidget {
                   onTap: () => onOpenAgent?.call('税务'),
                 ),
                 _InsightItem(
+                  icon: Icons.balance_outlined,
+                  iconBg: const Color(0xFF0D9488),
+                  title: '司法',
+                  subtitle: '司法诉讼与案件信息',
+                  onTap: () => onOpenAgent?.call('司法'),
+                ),
+                _InsightItem(
+                  icon: Icons.verified_outlined,
+                  iconBg: const Color(0xFF0891B2),
+                  title: '信用',
+                  subtitle: '企业信用评级与风险',
+                  onTap: () => onOpenAgent?.call('信用'),
+                ),
+                _InsightItem(
                   icon: Icons.calculate_outlined,
                   iconBg: const Color(0xFF0EA5E9),
                   title: '财务',
