@@ -497,7 +497,7 @@ class DatabaseTabState extends State<DatabaseTab> {
     );
   }
 
-  /// 五大类数据模块卡片：信息公开、对话记忆、本地私有、联网搜索、外接应用
+  /// 五大类数据模块卡片：信息公开、联网搜索、本地私有、外接应用、对话记忆
   Widget _buildDataModules() {
     final modules = [
       _DataModule(
@@ -507,11 +507,10 @@ class DatabaseTabState extends State<DatabaseTab> {
         subtitle: '工商、税务、司法、信用等公开信息',
       ),
       _DataModule(
-        icon: Icons.auto_stories_outlined,
-        color: const Color(0xFF7C3AED),
-        title: '对话记忆数据',
-        subtitle: 'AI提炼、压缩、记忆三层沉淀',
-        count: _memories.length,
+        icon: Icons.search_outlined,
+        color: const Color(0xFFF59E0B),
+        title: '联网搜索数据',
+        subtitle: '行业动态、新闻、社交媒体',
       ),
       _DataModule(
         icon: Icons.folder_outlined,
@@ -520,16 +519,17 @@ class DatabaseTabState extends State<DatabaseTab> {
         subtitle: '手机、电脑、U盘、移动硬盘文件',
       ),
       _DataModule(
-        icon: Icons.search_outlined,
-        color: const Color(0xFFF59E0B),
-        title: '联网搜索数据',
-        subtitle: '行业动态、新闻、社交媒体',
-      ),
-      _DataModule(
         icon: Icons.extension_outlined,
         color: const Color(0xFF0891B2),
         title: '外接应用数据',
         subtitle: '第三方应用、API、数据源接入',
+      ),
+      _DataModule(
+        icon: Icons.auto_stories_outlined,
+        color: const Color(0xFF7C3AED),
+        title: '对话记忆数据',
+        subtitle: 'AI提炼、压缩、记忆三层沉淀',
+        count: _memories.length,
       ),
     ];
 
