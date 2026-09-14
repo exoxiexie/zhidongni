@@ -28,6 +28,9 @@ class DatabaseTabState extends State<DatabaseTab> {
   List<MemoryItem> _memories = [];
   bool _loadingMemories = false;
 
+  /// 数据视图切换：0=按来源（5类数据），1=按业务（业务维度分类）
+  int _dataViewMode = 0;
+
   @override
   void initState() {
     super.initState();
@@ -115,8 +118,14 @@ class DatabaseTabState extends State<DatabaseTab> {
               children: [
                 // 顶部企业主体信息区
                 _auth == null ? _buildNotLoggedIn() : _buildEnterpriseInfo(),
-                // 五大类数据模块卡片
-                if (_auth != null) _buildDataModules(),
+                if (_auth != null) ...[
+                  // 数据视图切换 Tab：按来源 | 按业务
+                  _buildDataViewTabs(),
+                  if (_dataViewMode == 0)
+                    _buildDataModules()
+                  else
+                    _buildBusinessViewPlaceholder(),
+                ],
               ],
             ),
           ),
@@ -161,7 +170,8 @@ class DatabaseTabState extends State<DatabaseTab> {
           () {
             final item = items[i];
             return ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               leading: Container(
                 width: 36,
                 height: 36,
@@ -183,7 +193,8 @@ class DatabaseTabState extends State<DatabaseTab> {
                 item.subtitle,
                 style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
               ),
-              trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFFC0C4CC)),
+              trailing: const Icon(Icons.chevron_right,
+                  size: 20, color: Color(0xFFC0C4CC)),
               onTap: () => _openCategoryDetail(item),
             );
           }(),
@@ -356,8 +367,8 @@ class DatabaseTabState extends State<DatabaseTab> {
     if (_enterprise?.creditCode.isEmpty == true) return;
     Navigator.of(context)
         .push(MaterialPageRoute(
-          builder: (_) => MemoryEditPage(tenantId: _enterprise!.creditCode),
-        ))
+      builder: (_) => MemoryEditPage(tenantId: _enterprise!.creditCode),
+    ))
         .then((saved) {
       if (saved == true) _loadMemories();
     });
@@ -368,11 +379,11 @@ class DatabaseTabState extends State<DatabaseTab> {
     if (_enterprise?.creditCode.isEmpty == true) return;
     Navigator.of(context)
         .push(MaterialPageRoute(
-          builder: (_) => MemoryEditPage(
-            tenantId: _enterprise!.creditCode,
-            memory: item,
-          ),
-        ))
+      builder: (_) => MemoryEditPage(
+        tenantId: _enterprise!.creditCode,
+        memory: item,
+      ),
+    ))
         .then((saved) {
       if (saved == true) _loadMemories();
     });
@@ -399,7 +410,8 @@ class DatabaseTabState extends State<DatabaseTab> {
                 const SizedBox(height: 16),
                 Text(
                   '${item.title}功能开发中',
-                  style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
+                  style:
+                      const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -427,11 +439,15 @@ class DatabaseTabState extends State<DatabaseTab> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.business_outlined, size: 48, color: Color(0xFF9CA3AF)),
+          const Icon(Icons.business_outlined,
+              size: 48, color: Color(0xFF9CA3AF)),
           const SizedBox(height: 12),
           const Text(
             '尚未登录企业账号',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1B1C)),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1B1C)),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -446,7 +462,8 @@ class DatabaseTabState extends State<DatabaseTab> {
               onPressed: _goLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text('登录 / 注册企业账号',
                   style: TextStyle(fontSize: 15, color: Colors.white)),
@@ -490,9 +507,87 @@ class DatabaseTabState extends State<DatabaseTab> {
           // 统一社会信用代码（主体身份标识）
           Text(
             '统一社会信用代码：$creditCode',
-            style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
+            style:
+                TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 数据视图切换 Tab：按来源 | 按业务
+  Widget _buildDataViewTabs() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        children: [
+          _buildViewTab(label: '按来源', index: 0),
+          const SizedBox(width: 28),
+          _buildViewTab(label: '按业务', index: 1),
+        ],
+      ),
+    );
+  }
+
+  /// 单个视图 Tab（选中：深色加粗 + 蓝色下划线；未选中：灰色）
+  Widget _buildViewTab({required String label, required int index}) {
+    final selected = _dataViewMode == index;
+    return InkWell(
+      onTap: () => setState(() => _dataViewMode = index),
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected
+                    ? const Color(0xFF1A1B1C)
+                    : const Color(0xFF9CA3AF),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: 24,
+              height: 3,
+              decoration: BoxDecoration(
+                color: selected ? const Color(0xFF2563EB) : Colors.transparent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 按业务视图占位（结构已搭好，内容后续填充）
+  Widget _buildBusinessViewPlaceholder() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.dashboard_customize_outlined,
+                size: 36, color: Color(0xFFC0C4CC)),
+            SizedBox(height: 12),
+            Text(
+              '按业务分类视图开发中',
+              style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -589,7 +684,8 @@ class DatabaseTabState extends State<DatabaseTab> {
                       if (module.count != null) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: module.color.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -687,16 +783,19 @@ class DatabaseTabState extends State<DatabaseTab> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(module.icon, size: 56, color: module.color.withOpacity(0.5)),
+                Icon(module.icon,
+                    size: 56, color: module.color.withOpacity(0.5)),
                 const SizedBox(height: 16),
                 Text(
                   '${module.title}功能开发中',
-                  style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
+                  style:
+                      const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   module.subtitle,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                  style:
+                      const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -715,7 +814,8 @@ class DatabaseTabState extends State<DatabaseTab> {
           SizedBox(
             width: 100,
             child: Text(label,
-                style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.7))),
+                style: TextStyle(
+                    fontSize: 12, color: Colors.white.withOpacity(0.7))),
           ),
           Expanded(
             child: Text(value,
