@@ -35,6 +35,8 @@ class _InsightTabState extends State<InsightTab> {
         Icons.copyright_outlined, Color(0xFF7C3AED), '知识产权', '商标、专利与版权保护'),
     _AgentDef(
         Icons.assignment_outlined, Color(0xFF14B8A6), '政策申报', '惠企政策匹配与申报'),
+    _AgentDef(
+        Icons.fact_check_outlined, Color(0xFF0284C7), '项目审批', '项目立项、审批与备案'),
     _AgentDef(Icons.gavel, Color(0xFF6366F1), '法律', '合同审查与法务咨询'),
     _AgentDef(
         Icons.health_and_safety_outlined, Color(0xFFEA6668), '社保', '社保、公积金管理'),
@@ -79,78 +81,82 @@ class _InsightTabState extends State<InsightTab> {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 18, 16, 4),
-                  child: Text(
-                    '管理业务智能体',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1B1C),
+      builder: (ctx) => FractionallySizedBox(
+        heightFactor: 0.66,
+        child: StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 18, 16, 4),
+                    child: Text(
+                      '管理业务智能体',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1B1C),
+                      ),
                     ),
                   ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Text(
-                    '关闭后该智能体卡片将不在首页显示',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      '关闭后该智能体卡片将不在首页显示',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                    ),
                   ),
-                ),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: _agents.length,
-                    itemBuilder: (context, i) {
-                      final a = _agents[i];
-                      final enabled = _enabled[a.title] ?? true;
-                      return ListTile(
-                        leading: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: a.iconBg,
-                            borderRadius: BorderRadius.circular(8),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      itemCount: _agents.length,
+                      itemBuilder: (context, i) {
+                        final a = _agents[i];
+                        final enabled = _enabled[a.title] ?? true;
+                        return ListTile(
+                          leading: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: a.iconBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(a.icon, size: 18, color: Colors.white),
                           ),
-                          child: Icon(a.icon, size: 18, color: Colors.white),
-                        ),
-                        title: Text(
-                          a.title,
-                          style: const TextStyle(
-                              fontSize: 15, color: Color(0xFF1A1B1C)),
-                        ),
-                        subtitle: Text(
-                          a.subtitle,
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xFF9CA3AF)),
-                        ),
-                        trailing: Switch(
-                          value: enabled,
-                          activeColor: const Color(0xFF5B7FD4),
-                          onChanged: (v) {
-                            setSheetState(() => _enabled[a.title] = v);
-                            _setEnabled(a.title, v);
-                          },
-                        ),
-                      );
-                    },
+                          title: Text(
+                            a.title,
+                            style: const TextStyle(
+                                fontSize: 15, color: Color(0xFF1A1B1C)),
+                          ),
+                          subtitle: Text(
+                            a.subtitle,
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF9CA3AF)),
+                          ),
+                          trailing: Switch(
+                            value: enabled,
+                            activeColor: const Color(0xFF5B7FD4),
+                            onChanged: (v) {
+                              setSheetState(() => _enabled[a.title] = v);
+                              _setEnabled(a.title, v);
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          );
-        },
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
