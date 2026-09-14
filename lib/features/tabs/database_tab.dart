@@ -15,6 +15,7 @@ import '../data/local_data_detail_page.dart';
 import '../data/search_data_history_page.dart';
 import '../data/business_context_service.dart';
 import '../data/business_data_list_page.dart';
+import '../data/business_seed_data.dart';
 import '../data/data_tags.dart';
 
 class DatabaseTab extends StatefulWidget {
@@ -104,6 +105,8 @@ class DatabaseTabState extends State<DatabaseTab> {
         _loading = false;
       });
       if (ent?.creditCode.isNotEmpty == true) {
+        // 首次打开：为模拟企业各业务域表注入种子数据（幂等，已有数据不重复写）
+        await BusinessSeedService.seedIfEmpty(ent!.creditCode);
         _loadMemories();
         _loadBusinessCounts();
       }

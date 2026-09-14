@@ -10,6 +10,7 @@ import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
 import '../chat/business_agent_page.dart';
 import '../chat/chat_page.dart';
+import '../data/business_seed_data.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
 import '../tabs/database_tab.dart';
@@ -43,7 +44,7 @@ class _ShellPageState extends State<ShellPage> {
     _loadTenant();
   }
 
-  /// 加载当前登录企业的租户ID
+  /// 加载当前登录企业的租户ID，并确保业务域种子数据已写入
   Future<void> _loadTenant() async {
     try {
       final auth = await EnterpriseAuthService.getAuth();
@@ -51,6 +52,8 @@ class _ShellPageState extends State<ShellPage> {
         for (final e in kEnterpriseSeedData) {
           if (e.id == auth.enterpriseId || e.name == auth.enterpriseName) {
             if (mounted) setState(() => _currentTenantId = e.creditCode);
+            // 幂等：为模拟企业业务域表注入种子数据（已有数据不重复写）
+            await BusinessSeedService.seedIfEmpty(e.creditCode);
             break;
           }
         }

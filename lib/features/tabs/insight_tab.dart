@@ -7,6 +7,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/business_domain.dart';
+
 class InsightTab extends StatefulWidget {
   /// 打开对话页回调（点击顶部"对话"板块时触发）
   final VoidCallback? onOpenChat;
@@ -21,27 +23,10 @@ class InsightTab extends StatefulWidget {
 }
 
 class _InsightTabState extends State<InsightTab> {
-  /// 全部业务智能体定义（顺序即展示顺序）
-  static const List<_AgentDef> _agents = [
-    _AgentDef(Icons.account_balance_outlined, Color(0xFF2563EB), '贷款',
-        '融资、贷款、资金周转评估'),
-    _AgentDef(Icons.business_outlined, Color(0xFF059669), '工商', '企业工商登记信息'),
-    _AgentDef(
-        Icons.receipt_long_outlined, Color(0xFFF97316), '税务', '税务申报、筹划与合规'),
-    _AgentDef(Icons.balance_outlined, Color(0xFF0D9488), '司法', '司法诉讼与案件信息'),
-    _AgentDef(Icons.verified_outlined, Color(0xFF0891B2), '信用', '企业信用评级与风险'),
-    _AgentDef(Icons.calculate_outlined, Color(0xFF0EA5E9), '财务', '财务核算、分析与报表'),
-    _AgentDef(
-        Icons.copyright_outlined, Color(0xFF7C3AED), '知识产权', '商标、专利与版权保护'),
-    _AgentDef(
-        Icons.assignment_outlined, Color(0xFF14B8A6), '政策申报', '惠企政策匹配与申报'),
-    _AgentDef(
-        Icons.fact_check_outlined, Color(0xFF0284C7), '项目审批', '项目立项、审批与备案'),
-    _AgentDef(Icons.gavel, Color(0xFF6366F1), '法律', '合同审查与法务咨询'),
-    _AgentDef(
-        Icons.health_and_safety_outlined, Color(0xFFEA6668), '社保', '社保、公积金管理'),
-    _AgentDef(
-        Icons.local_shipping_outlined, Color(0xFFF59E0B), '供应链', '上下游协同与风险监测'),
+  /// 全部业务智能体定义（从三位一体注册表派生，顺序即展示顺序）
+  static final List<_AgentDef> _agents = [
+    for (final d in kBusinessDomains)
+      _AgentDef(d.icon, d.color, d.tag, d.subtitle),
   ];
 
   /// 智能体显示开关（title -> 是否显示），默认全部开启

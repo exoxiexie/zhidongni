@@ -7,9 +7,13 @@
 ///   memory                记忆表
 ///   local_upload_sessions 本地文件沉淀会话表
 ///   local_files           本地文件记录表
+///   {domain}_data         业务域数据表（12 张，三位一体：业务智能体↔标签↔数据表，
+///                         由 kBusinessDomains 注册表驱动建表，可随注册增长）
 library;
 
 import 'package:sqflite/sqflite.dart';
+
+import '../../data/business_domain.dart';
 import '../tenant_storage.dart';
 
 class AppDatabase {
@@ -28,7 +32,7 @@ class AppDatabase {
     final path = await TenantStorage.getDatabasePath(tenantId);
     _db = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -139,6 +143,32 @@ class AppDatabase {
     await db.execute(
       'CREATE INDEX idx_local_sessions_tenant_id ON local_upload_sessions(tenant_id)',
     );
+
+    // 业务域数据表（12 张，三位一体，统一 schema）
+    await _createBusinessDomainTables(db);
+  }
+
+  /// 按三位一体注册表创建业务域数据表（统一 schema）
+  Future<void> _createBusinessDomainTables(Database db) async {
+    for (final domain in kBusinessDomains) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ${domain.table} (
+          id TEXT PRIMARY KEY,
+          credit_code TEXT NOT NULL,
+          domain_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          detail TEXT,
+          weight INTEGER DEFAULT 50,
+          data_tags TEXT,
+          source TEXT DEFAULT '模拟数据',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_${domain.table}_credit ON ${domain.table}(credit_code)',
+      );
+    }
   }
 
   /// 数据库升级
@@ -191,6 +221,11 @@ class AppDatabase {
       await db.execute(
         'ALTER TABLE local_files ADD COLUMN data_tags TEXT',
       );
+    }
+
+    if (oldVersion < 5) {
+      // v4 → v5：按三位一体注册表创建 12 张业务域数据表
+      await _createBusinessDomainTables(db);
     }
   }
 }

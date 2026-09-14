@@ -13,9 +13,11 @@ library;
 
 import '../enterprise/enterprise_data.dart';
 import '../enterprise/public_data.dart';
+import '../storage/business_domain_store.dart';
 import '../storage/local_file_store.dart';
 import '../storage/memory_store.dart';
 import '../storage/search_data_store.dart';
+import 'business_domain.dart';
 import 'data_tags.dart';
 
 class BusinessContextService {
@@ -26,6 +28,7 @@ class BusinessContextService {
   static const int maxMemories = 8;
   static const int maxSearches = 5;
   static const int maxLocalFiles = 20;
+  static const int maxDomainRecords = 8;
 
   /// 进上下文的权重阈值（与联网搜索上下文阈值一致）
   static const int weightThreshold = 60;
@@ -84,7 +87,26 @@ class BusinessContextService {
       buf.writeln(publicPart);
     }
 
-    // ── 4. 本地私有文件（仅文件名清单，不进正文） ──
+    // ── 4. 业务域数据表（该域结构化记录，权重≥阈值，取前 N） ──
+    try {
+      final domain = BusinessDomain.byTag(businessTag);
+      if (domain != null) {
+        final records = await BusinessDomainStore.listByTenant(
+          tenantId,
+          domainId: domain.id,
+          weightMin: weightThreshold,
+          limit: maxDomainRecords,
+        );
+        if (records.isNotEmpty) {
+          buf.writeln('\n【业务域数据】');
+          for (final r in records) {
+            buf.writeln('- [权重${r.weight}] ${r.title}：${_trim(r.detail, 300)}');
+          }
+        }
+      }
+    } catch (_) {}
+
+    // ── 5. 本地私有文件（仅文件名清单，不进正文） ──
     try {
       final sessions = await LocalFileStore.listSessions(tenantId);
       final fileNames = <String>[];
@@ -209,11 +231,19 @@ class BusinessDataEntry {
 
 /// 业务视图数据服务：按业务标签统计 / 列出数据条目（与注入上下文共用筛选口径）
 class BusinessViewService {
-  /// 统计各业务域下的数据条数（记忆+联网搜索+本地文件+信息公开）
+  /// 统计各业务域下的数据条数（业务域表+记忆+联网搜索+本地文件+信息公开）
   static Future<Map<String, int>> countByBusiness(String tenantId) async {
     final counts = <String, int>{
       for (final t in DataBusinessTag.all) t: 0,
     };
+
+    // 业务域数据表（三位一体：与智能体/标签一一对应）
+    try {
+      for (final domain in kBusinessDomains) {
+        counts[domain.tag] = (counts[domain.tag] ?? 0) +
+            await BusinessDomainStore.countByDomain(tenantId, domain.id);
+      }
+    } catch (_) {}
 
     try {
       final memories = await MemoryStore.listAll(tenantId);
@@ -263,6 +293,26 @@ class BusinessViewService {
   static Future<List<BusinessDataEntry>> listByBusiness(
       String tenantId, String businessTag) async {
     final entries = <BusinessDataEntry>[];
+
+    // 业务域数据表（三位一体记录）
+    try {
+      final domain = BusinessDomain.byTag(businessTag);
+      if (domain != null) {
+        final records = await BusinessDomainStore.listByTenant(tenantId,
+            domainId: domain.id, limit: 200);
+        for (final r in records) {
+          final sourceTag = r.dataTags.of(DataTagDimension.source).isNotEmpty
+              ? r.dataTags.of(DataTagDimension.source).first
+              : DataSourceTag.publicInfo;
+          entries.add(BusinessDataEntry(
+            source: sourceTag,
+            title: r.title,
+            weight: r.weight,
+            detail: BusinessContextService._trim(r.detail, 120),
+          ));
+        }
+      }
+    } catch (_) {}
 
     // 对话记忆
     try {
