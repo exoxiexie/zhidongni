@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
+import '../data/business_agent_role.dart';
 import '../data/business_context_service.dart';
 import 'chat_input_bar.dart';
 
@@ -52,13 +53,16 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
   }
 
   /// 加载该业务标签下的沉淀数据，组装为系统提示词上下文
+  /// （角色定义 + 业务域数据现状 合并为一个系统提示词）
   Future<void> _loadBusinessContext() async {
     try {
       final context = await BusinessContextService.build(
           tenantId: widget.tenantId, businessTag: widget.title);
+      final fullPrompt =
+          BusinessAgentRole.buildSystemPrompt(widget.title, context);
       if (mounted) {
         setState(() {
-          _businessContext = context;
+          _businessContext = fullPrompt;
           _contextLoading = false;
         });
       }

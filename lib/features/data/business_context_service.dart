@@ -107,6 +107,10 @@ class BusinessContextService {
     } catch (_) {}
 
     final text = buf.toString().trim();
+    // 没有任何沉淀数据时，给出明确提示（智能体角色提示词会据此引导用户）
+    if (text.isEmpty || text == '【业务域上下文：$businessTag】') {
+      return '【业务域上下文：$businessTag】\n当前暂无沉淀数据。';
+    }
     if (text.length <= maxChars) return text;
     return '${text.substring(0, maxChars)}…';
   }

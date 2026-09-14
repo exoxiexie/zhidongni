@@ -66,7 +66,11 @@ class HttpChatService implements ChatService {
     try {
       // ── 身份问题后台拦截：检测到用户问身份时，直接返回标准答案，不走模型 ──
       // 这样可以100%确保身份回答的准确性和一致性，不受模型幻觉影响
-      if (history.isNotEmpty && history.last.role == 'user') {
+      // 【例外】业务智能体场景（带 systemExtra 角色提示词）不拦截：
+      // 该场景下"你是谁"应由模型基于智能体角色提示词回答（如"我是你的税务智能体…"）
+      if (history.isNotEmpty &&
+          history.last.role == 'user' &&
+          (systemExtra == null || systemExtra.isEmpty)) {
         final userMsg = history.last.content.toLowerCase();
         if (_isIdentityQuestion(userMsg)) {
           const answer = '我是智懂你 AI 管家，致力于为你提供职业成长、企业管理等全方位的智能服务。';
