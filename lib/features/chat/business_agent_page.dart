@@ -36,6 +36,7 @@ class BusinessAgentPage extends StatefulWidget {
 
 class _BusinessAgentPageState extends State<BusinessAgentPage> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
   ChatModel _selectedModel = kChatModels[0];
@@ -75,6 +76,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -86,6 +88,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
       _controller.clear();
       _isLoading = true;
     });
+    _scrollToBottom();
     try {
       // 智能体单轮对话：业务域上下文作为系统提示词注入
       final reply = await widget.chatService.sendMessage(
@@ -100,6 +103,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
           _messages.add(ChatMessage(role: 'assistant', content: reply));
           _isLoading = false;
         });
+        _scrollToBottom();
       }
     } catch (e) {
       if (mounted) {
@@ -108,6 +112,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
               .add(ChatMessage(role: 'assistant', content: '请求失败，请稍后重试（$e）'));
           _isLoading = false;
         });
+        _scrollToBottom();
       }
     }
   }
@@ -206,6 +211,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
 
   Widget _buildMessageList() {
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
       itemCount: _messages.length + (_isLoading ? 1 : 0),
       itemBuilder: (context, index) {
@@ -215,6 +221,19 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
         return _Bubble(message: _messages[index]);
       },
     );
+  }
+
+  /// 自动滚动到消息列表底部（用户发送 / 助手回复后调用）
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 }
 
