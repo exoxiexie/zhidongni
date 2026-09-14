@@ -7,10 +7,13 @@ library;
 import 'package:flutter/material.dart';
 
 class InsightTab extends StatelessWidget {
-  /// 快捷指令回调：选择预设指令后，由 ShellPage 切换到对话页并填入指令
+  /// 快捷指令回调：选择预设指令后，由 ShellPage 打开对话页并填入指令
   final void Function(String command)? onPresetCommand;
 
-  const InsightTab({super.key, this.onPresetCommand});
+  /// 打开对话页回调（点击顶部"对话"卡片时触发）
+  final VoidCallback? onOpenChat;
+
+  const InsightTab({super.key, this.onPresetCommand, this.onOpenChat});
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +23,9 @@ class InsightTab extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              const SizedBox(height: 16),
+              // 对话入口卡片
+              _buildChatCard(context),
               const SizedBox(height: 16),
               // 快捷指令卡片
               _buildPresetCommandCard(context),
@@ -52,6 +58,67 @@ class InsightTab extends StatelessWidget {
               const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// 对话入口卡片（点击进入对话页）
+  Widget _buildChatCard(BuildContext context) {
+    return GestureDetector(
+      onTap: onOpenChat,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A1B1C), Color(0xFF374151)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // 左侧图标
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.chat_bubble_outline,
+                  size: 24, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            // 中间标题和小字
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '对话',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '与智懂你 AI 管家对话，支持联网搜索与文件解析',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 右侧箭头
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
+          ],
         ),
       ),
     );
