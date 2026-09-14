@@ -31,7 +31,7 @@ class _ShellPageState extends State<ShellPage> {
   final GlobalKey<DatabaseTabState> _databaseTabKey =
       GlobalKey<DatabaseTabState>();
 
-  static const _titles = ['数据', '懂你', '对话', '发现', '我的'];
+  static const _titles = ['懂你', '数据', '对话', '发现', '我的'];
 
   /// 双杠菜单图标（上面长、下面短，经典 AI 产品风格）
   /// 点击区域放大，用 InkWell 确保整个区域都能响应点击
@@ -191,8 +191,8 @@ class _ShellPageState extends State<ShellPage> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      DatabaseTab(key: _databaseTabKey),
       InsightTab(onPresetCommand: sendPresetCommand),
+      DatabaseTab(key: _databaseTabKey),
       HomeTab(
         key: _homeTabKey,
         chatService: widget.chatService!,
@@ -237,20 +237,21 @@ class _ShellPageState extends State<ShellPage> {
         onDestinationSelected: (i) {
           setState(() => _index = i);
           // 切换到数据页时刷新记忆列表（让自动提炼的记忆立即可见）
-          if (i == 0) {
+          // 数据页现在是第2位（index 1）
+          if (i == 1) {
             _databaseTabKey.currentState?.refresh();
           }
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.dataset_outlined),
-            selectedIcon: Icon(Icons.dataset),
-            label: '数据',
-          ),
-          NavigationDestination(
             icon: Icon(Icons.lightbulb_outline),
             selectedIcon: Icon(Icons.lightbulb),
             label: '懂你',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.dataset_outlined),
+            selectedIcon: Icon(Icons.dataset),
+            label: '数据',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline),
