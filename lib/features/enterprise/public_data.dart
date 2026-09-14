@@ -5,6 +5,30 @@
 /// 以信用代码为 key 直接覆盖替换为真实数据，注入逻辑无需改动。
 library;
 
+import '../data/data_tags.dart';
+
+// ────────────────────────────────────────────────────────────
+//  信息公开数据统一标签（来源=信息公开，业务=对应类别）
+// ────────────────────────────────────────────────────────────
+
+/// 税务数据标签
+const Map<String, List<String>> kPublicTaxTags = {
+  DataTagDimension.source: [DataSourceTag.publicInfo],
+  DataTagDimension.business: [DataBusinessTag.tax],
+};
+
+/// 司法数据标签
+const Map<String, List<String>> kPublicJudicialTags = {
+  DataTagDimension.source: [DataSourceTag.publicInfo],
+  DataTagDimension.business: [DataBusinessTag.judicial],
+};
+
+/// 信用数据标签
+const Map<String, List<String>> kPublicCreditTags = {
+  DataTagDimension.source: [DataSourceTag.publicInfo],
+  DataTagDimension.business: [DataBusinessTag.credit],
+};
+
 // ────────────────────────────────────────────────────────────
 //  税务信息表
 // ────────────────────────────────────────────────────────────
@@ -34,6 +58,9 @@ class TaxInfo {
   final List<TaxPenalty> taxPenalties; // 处罚记录
   final bool isTaxAbnormal; // 是否非正常户
 
+  /// 统一数据标签（来源=信息公开，业务=税务）
+  final DataTags dataTags;
+
   const TaxInfo({
     required this.creditCode,
     required this.taxRating,
@@ -42,6 +69,7 @@ class TaxInfo {
     required this.taxPenaltyCount,
     required this.taxPenalties,
     required this.isTaxAbnormal,
+    this.dataTags = const DataTags.fromConst(kPublicTaxTags),
   });
 }
 
@@ -80,6 +108,9 @@ class JudicialInfo {
   final bool isDishonest; // 是否失信被执行人
   final double dishonestAmount; // 失信金额（万元）
 
+  /// 统一数据标签（来源=信息公开，业务=司法）
+  final DataTags dataTags;
+
   const JudicialInfo({
     required this.creditCode,
     required this.lawsuitCount,
@@ -90,6 +121,7 @@ class JudicialInfo {
     required this.enforcementAmount,
     required this.isDishonest,
     required this.dishonestAmount,
+    this.dataTags = const DataTags.fromConst(kPublicJudicialTags),
   });
 }
 
@@ -125,6 +157,9 @@ class CreditInfo {
   final String abnormalReason; // 异常原因
   final bool isSeriousIllegal; // 是否严重违法失信
 
+  /// 统一数据标签（来源=信息公开，业务=信用）
+  final DataTags dataTags;
+
   const CreditInfo({
     required this.creditCode,
     required this.creditRating,
@@ -134,6 +169,7 @@ class CreditInfo {
     required this.isBusinessAbnormal,
     required this.abnormalReason,
     required this.isSeriousIllegal,
+    this.dataTags = const DataTags.fromConst(kPublicCreditTags),
   });
 }
 

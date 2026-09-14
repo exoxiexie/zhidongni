@@ -28,7 +28,7 @@ class AppDatabase {
     final path = await TenantStorage.getDatabasePath(tenantId);
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -128,6 +128,7 @@ class AppDatabase {
         relative_path TEXT NOT NULL,
         source TEXT NOT NULL,
         uploaded_at TEXT NOT NULL,
+        data_tags TEXT,
         FOREIGN KEY (session_id) REFERENCES local_upload_sessions(id) ON DELETE CASCADE
       )
     ''');
@@ -165,6 +166,7 @@ class AppDatabase {
           relative_path TEXT NOT NULL,
           source TEXT NOT NULL,
           uploaded_at TEXT NOT NULL,
+          data_tags TEXT,
           FOREIGN KEY (session_id) REFERENCES local_upload_sessions(id) ON DELETE CASCADE
         )
       ''');
@@ -181,6 +183,13 @@ class AppDatabase {
       // v2 → v3：sessions 表添加最后提炼消息ID字段（用于增量提炼）
       await db.execute(
         'ALTER TABLE sessions ADD COLUMN last_extracted_message_id TEXT',
+      );
+    }
+
+    if (oldVersion < 4) {
+      // v3 → v4：local_files 表添加统一数据标签列（来源/业务等维度）
+      await db.execute(
+        'ALTER TABLE local_files ADD COLUMN data_tags TEXT',
       );
     }
   }

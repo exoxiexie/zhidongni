@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../data/data_tags.dart';
 import 'database/app_database.dart';
 
 /// 单个文件记录
@@ -25,7 +26,10 @@ class LocalFileItem {
   final String source; // 来源：device（本设备）/ usb（U盘/移动硬盘）
   final DateTime uploadedAt; // 沉淀时间
 
-  const LocalFileItem({
+  /// 统一数据标签（来源/业务等维度，可持续扩展）
+  final DataTags dataTags;
+
+  LocalFileItem({
     required this.id,
     required this.sessionId,
     required this.name,
@@ -34,7 +38,8 @@ class LocalFileItem {
     required this.relativePath,
     required this.source,
     required this.uploadedAt,
-  });
+    DataTags? dataTags,
+  }) : dataTags = dataTags ?? DataTags();
 
   /// 格式化文件大小
   String get sizeFormatted {
@@ -52,6 +57,7 @@ class LocalFileItem {
         'relative_path': relativePath,
         'source': source,
         'uploaded_at': uploadedAt.toIso8601String(),
+        if (!dataTags.isEmpty) 'data_tags': dataTags.toJsonString(),
       };
 
   factory LocalFileItem.fromMap(Map<String, dynamic> map) => LocalFileItem(
@@ -63,6 +69,7 @@ class LocalFileItem {
         relativePath: map['relative_path'] as String,
         source: map['source'] as String,
         uploadedAt: DateTime.parse(map['uploaded_at'] as String),
+        dataTags: DataTags.fromJsonString(map['data_tags'] as String?),
       );
 }
 
@@ -86,7 +93,8 @@ class LocalUploadSession {
 
   String get totalSizeFormatted {
     if (totalSize < 1024) return '$totalSize B';
-    if (totalSize < 1024 * 1024) return '${(totalSize / 1024).toStringAsFixed(1)} KB';
+    if (totalSize < 1024 * 1024)
+      return '${(totalSize / 1024).toStringAsFixed(1)} KB';
     return '${(totalSize / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
@@ -147,6 +155,9 @@ class LocalFileStore {
         relativePath: relativePath,
         source: source,
         uploadedAt: now,
+        // 统一标签：来源标签固定为"本地私有"（业务标签由用户后续打）
+        dataTags: DataTags()
+          ..set(DataTagDimension.source, [DataSourceTag.localPrivate]),
       );
       fileItems.add(item);
       totalSize += fileSize;
@@ -209,7 +220,8 @@ class LocalFileStore {
   }
 
   /// 获取单个会话详情
-  static Future<LocalUploadSession?> getSession(String tenantId, String sessionId) async {
+  static Future<LocalUploadSession?> getSession(
+      String tenantId, String sessionId) async {
     final db = await _getDb(tenantId);
     final sessionMaps = await db.query(
       'local_upload_sessions',
@@ -243,14 +255,17 @@ class LocalFileStore {
     final db = await _getDb(tenantId);
 
     // 删除文件
-    final sessionDir = Directory(p.join(await _tenantRoot(tenantId), sessionId));
+    final sessionDir =
+        Directory(p.join(await _tenantRoot(tenantId), sessionId));
     if (await sessionDir.exists()) {
       await sessionDir.delete(recursive: true);
     }
 
     // 删除数据库记录
-    await db.delete('local_files', where: 'session_id = ?', whereArgs: [sessionId]);
-    await db.delete('local_upload_sessions', where: 'id = ?', whereArgs: [sessionId]);
+    await db
+        .delete('local_files', where: 'session_id = ?', whereArgs: [sessionId]);
+    await db.delete('local_upload_sessions',
+        where: 'id = ?', whereArgs: [sessionId]);
   }
 
   /// 获取已沉淀文件总数

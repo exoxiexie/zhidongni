@@ -15,6 +15,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../contracts/chat_service.dart';
+import '../data/data_tags.dart';
 
 /// 联网搜索数据项
 class SearchDataItem {
@@ -30,7 +31,10 @@ class SearchDataItem {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const SearchDataItem({
+  /// 统一数据标签（来源/业务等维度，可持续扩展）
+  final DataTags dataTags;
+
+  SearchDataItem({
     required this.id,
     required this.title,
     this.weight = 30,
@@ -42,7 +46,8 @@ class SearchDataItem {
     this.sources = const [],
     required this.createdAt,
     required this.updatedAt,
-  });
+    DataTags? dataTags,
+  }) : dataTags = dataTags ?? DataTags();
 
   /// 权重颜色
   Color get weightColor {
@@ -64,6 +69,7 @@ class SearchDataItem {
     String? content,
     List<SearchSource>? sources,
     DateTime? updatedAt,
+    DataTags? dataTags,
   }) {
     return SearchDataItem(
       id: id,
@@ -77,6 +83,7 @@ class SearchDataItem {
       sources: sources ?? this.sources,
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
+      dataTags: dataTags ?? this.dataTags,
     );
   }
 }
@@ -104,7 +111,9 @@ class SearchDataStore {
         .replaceAll(RegExp(r'[^\w一-龥]+'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .trim();
-    return cleaned.isEmpty ? 'search' : cleaned.substring(0, cleaned.length > 30 ? 30 : cleaned.length);
+    return cleaned.isEmpty
+        ? 'search'
+        : cleaned.substring(0, cleaned.length > 30 ? 30 : cleaned.length);
   }
 
   /// 解析YAML front matter和MD内容
@@ -114,7 +123,8 @@ class SearchDataStore {
       final id = p.basenameWithoutExtension(file.path);
 
       // 解析YAML front matter
-      final yamlMatch = RegExp(r'^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)').firstMatch(content);
+      final yamlMatch = RegExp(r'^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)')
+          .firstMatch(content);
       if (yamlMatch == null) return null;
 
       final yamlStr = yamlMatch.group(1)!;
@@ -126,7 +136,10 @@ class SearchDataStore {
         final idx = line.indexOf(':');
         if (idx > 0) {
           final key = line.substring(0, idx).trim();
-          final value = line.substring(idx + 1).trim().replaceAll(RegExp('^["\']|["\']\$'), '');
+          final value = line
+              .substring(idx + 1)
+              .trim()
+              .replaceAll(RegExp('^["\']|["\']\$'), '');
           yaml[key] = value;
         }
       }
@@ -150,14 +163,22 @@ class SearchDataStore {
         id: id,
         title: yaml['title'] ?? '未命名搜索',
         weight: int.tryParse(yaml['weight'] ?? '30') ?? 30,
-        tags: (yaml['tags'] ?? '').split(RegExp(r'[,，]')).where((s) => s.trim().isNotEmpty).map((s) => s.trim()).toList(),
+        tags: (yaml['tags'] ?? '')
+            .split(RegExp(r'[,，]'))
+            .where((s) => s.trim().isNotEmpty)
+            .map((s) => s.trim())
+            .toList(),
         category: yaml['category'] ?? '联网搜索',
         searchQuery: yaml['search_query'] ?? '',
         source: yaml['source'] ?? 'DSH搜索',
         content: body,
         sources: sources,
-        createdAt: DateTime.tryParse(yaml['created_at'] ?? '') ?? DateTime.now(),
-        updatedAt: DateTime.tryParse(yaml['updated_at'] ?? '') ?? DateTime.now(),
+        createdAt:
+            DateTime.tryParse(yaml['created_at'] ?? '') ?? DateTime.now(),
+        updatedAt:
+            DateTime.tryParse(yaml['updated_at'] ?? '') ?? DateTime.now(),
+        // 统一数据标签（来源/业务等维度）
+        dataTags: DataTags.fromJsonString(yaml['data_tags']),
       );
     } catch (e) {
       return null;
@@ -174,8 +195,12 @@ class SearchDataStore {
     buf.writeln('category: ${item.category}');
     buf.writeln('search_query: ${item.searchQuery}');
     buf.writeln('source: ${item.source}');
+    if (!item.dataTags.isEmpty) {
+      buf.writeln('data_tags: ${item.dataTags.toJsonString()}');
+    }
     if (item.sources.isNotEmpty) {
-      final sourcesJson = jsonEncode(item.sources.map((s) => {'title': s.title, 'url': s.url}).toList());
+      final sourcesJson = jsonEncode(
+          item.sources.map((s) => {'title': s.title, 'url': s.url}).toList());
       buf.writeln('sources: $sourcesJson');
     }
     buf.writeln('created_at: ${item.createdAt.toIso8601String()}');
@@ -238,6 +263,9 @@ class SearchDataStore {
       sources: sources,
       createdAt: now,
       updatedAt: now,
+      // 统一标签：来源标签固定为"联网搜索"（业务标签由用户/提炼时打）
+      dataTags: DataTags()
+        ..set(DataTagDimension.source, [DataSourceTag.webSearch]),
     );
 
     await file.writeAsString(_serialize(item));
@@ -245,7 +273,8 @@ class SearchDataStore {
   }
 
   /// 更新搜索数据
-  static Future<SearchDataItem> update(String tenantId, SearchDataItem item) async {
+  static Future<SearchDataItem> update(
+      String tenantId, SearchDataItem item) async {
     final dir = await _dir(tenantId);
     // 找到对应的文件（文件名包含id前缀）
     File? targetFile;
@@ -269,7 +298,8 @@ class SearchDataStore {
   }
 
   /// 只更新权重（列表页快速操作）
-  static Future<SearchDataItem?> updateWeight(String tenantId, String id, int weight) async {
+  static Future<SearchDataItem?> updateWeight(
+      String tenantId, String id, int weight) async {
     final item = await getById(tenantId, id);
     if (item == null) return null;
     return update(tenantId, item.copyWith(weight: weight));
