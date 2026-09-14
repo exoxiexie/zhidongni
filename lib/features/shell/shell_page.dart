@@ -45,23 +45,10 @@ class _ShellPageState extends State<ShellPage> {
     );
   }
 
-  /// 供外部调用：快捷指令跳转——打开对话页并填入预设指令
-  void sendPresetCommand(String command) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ChatPage(
-          chatService: widget.chatService!,
-          agentService: widget.agentService,
-          initialCommand: command,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final pages = [
-      InsightTab(onPresetCommand: sendPresetCommand, onOpenChat: openChat),
+      InsightTab(onOpenChat: openChat),
       DatabaseTab(key: _databaseTabKey),
       const FilesTab(),
       const ProfileTab(),

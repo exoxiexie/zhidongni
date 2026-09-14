@@ -17,6 +17,7 @@ import '../../contracts/chat_session_service.dart';
 import '../../core/di/service_locator.dart';
 import '../agent/agent_service_impl.dart';
 import '../chat/attachment_parser.dart';
+import '../chat/preset_commands_page.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
 import '../enterprise/enterprise_model.dart';
@@ -881,33 +882,44 @@ class HomeTabState extends State<HomeTab> {
     );
   }
 
+  /// 空状态：快捷指令卡片 + 居中提示
   Widget _buildEmptyState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 64,
-            color: Color(0x335B7FD4),
-          ),
-          SizedBox(height: 12),
-          Text(
-            '智懂你，每个企业的 AI 管家',
-            style: TextStyle(fontSize: 16, color: Color(0xAA1A1B1C)),
-          ),
-        ],
-      ),
+    return ListView(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 16),
+      children: [
+        _buildQuickCommandCard(),
+        const SizedBox(height: 80),
+        Column(
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline,
+              size: 64,
+              color: Color(0x335B7FD4),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '智懂你，每个企业的 AI 管家',
+              style: TextStyle(fontSize: 16, color: Color(0xAA1A1B1C)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildMessageList() {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
-      itemCount: _messages.length + (_isLoading ? 1 : 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 16),
+      itemCount: 1 + _messages.length + (_isLoading ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == _messages.length) {
+        // 滚动区最上面：快捷指令卡片
+        if (index == 0) {
+          return _buildQuickCommandCard();
+        }
+        final msgIndex = index - 1;
+        if (msgIndex == _messages.length) {
           if (!_streamingReasoning && _streamBuffer.isNotEmpty) {
             return _MessageBubble(
               message: ChatMessage(
@@ -918,8 +930,78 @@ class HomeTabState extends State<HomeTab> {
           }
           return _ThinkingBubble(text: _thinkingText);
         }
-        return _MessageBubble(message: _messages[index]);
+        return _MessageBubble(message: _messages[msgIndex]);
       },
+    );
+  }
+
+  /// 快捷指令卡片（点击进入预设指令列表，选择后填入输入框）
+  Widget _buildQuickCommandCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PresetCommandsPage(
+              onSelect: (command) => setInputText(command),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF5B7FD4), Color(0xFF7C3AED)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // 左侧图标
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.tips_and_updates_outlined,
+                  size: 22, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            // 中间标题和小字
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '试试像这样给我下指令',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '正确的、完整的指令会得到更好的结果',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 右侧箭头
+            const Icon(Icons.arrow_forward_ios,
+                size: 16, color: Colors.white70),
+          ],
+        ),
+      ),
     );
   }
 
