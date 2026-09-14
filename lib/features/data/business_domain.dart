@@ -82,6 +82,16 @@ const List<BusinessDomain> kBusinessDomains = [
     need: '财务报表、银行流水、授信合同、抵押担保材料、贷款合同',
   ),
   BusinessDomain(
+    id: 'supply_chain',
+    tag: DataBusinessTag.supplyChain,
+    table: 'supply_chain_data',
+    subtitle: '上下游协同与风险监测',
+    icon: Icons.local_shipping_outlined,
+    color: Color(0xFFF59E0B),
+    scope: '采购管理、供应商评估、物流库存、订单履约',
+    need: '采购订单、供应商名录、库存报表、物流单据',
+  ),
+  BusinessDomain(
     id: 'business',
     tag: DataBusinessTag.business,
     table: 'business_data',
@@ -180,15 +190,5 @@ const List<BusinessDomain> kBusinessDomains = [
     color: Color(0xFFEA6668),
     scope: '社保缴纳、公积金管理、用工合规',
     need: '社保缴纳记录、公积金明细、用工花名册',
-  ),
-  BusinessDomain(
-    id: 'supply_chain',
-    tag: DataBusinessTag.supplyChain,
-    table: 'supply_chain_data',
-    subtitle: '上下游协同与风险监测',
-    icon: Icons.local_shipping_outlined,
-    color: Color(0xFFF59E0B),
-    scope: '采购管理、供应商评估、物流库存、订单履约',
-    need: '采购订单、供应商名录、库存报表、物流单据',
   ),
 ];

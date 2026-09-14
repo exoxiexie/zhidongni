@@ -593,6 +593,8 @@ class DatabaseTabState extends State<DatabaseTab> {
     final cards = [
       _BusinessCardData(DataBusinessTag.loan, Icons.account_balance_outlined,
           const Color(0xFFD97706), '贷款融资'),
+      _BusinessCardData(DataBusinessTag.supplyChain,
+          Icons.local_shipping_outlined, const Color(0xFF0891B2), '供应链'),
       _BusinessCardData(DataBusinessTag.business, Icons.business_outlined,
           const Color(0xFF2563EB), '工商注册'),
       _BusinessCardData(DataBusinessTag.tax, Icons.receipt_long_outlined,
@@ -613,8 +615,6 @@ class DatabaseTabState extends State<DatabaseTab> {
           const Color(0xFF475569), '合同法律'),
       _BusinessCardData(DataBusinessTag.socialSecurity, Icons.shield_outlined,
           const Color(0xFFEF4444), '社保公积金'),
-      _BusinessCardData(DataBusinessTag.supplyChain,
-          Icons.local_shipping_outlined, const Color(0xFF0891B2), '供应链'),
     ];
 
     return Padding(
