@@ -146,6 +146,8 @@ class LocalFileStore {
       await file.copy(destPath);
 
       final relativePath = p.join('local_files', sessionId, fileName);
+      // 业务标签：根据文件名关键词匹配（零模型成本，用户可手改）
+      final businessTags = DataBusinessTag.matchFromText(fileName);
       final item = LocalFileItem(
         id: fileId,
         sessionId: sessionId,
@@ -155,9 +157,10 @@ class LocalFileStore {
         relativePath: relativePath,
         source: source,
         uploadedAt: now,
-        // 统一标签：来源标签固定为"本地私有"（业务标签由用户后续打）
+        // 统一标签：来源标签固定为"本地私有"（业务标签由关键词规则打）
         dataTags: DataTags()
-          ..set(DataTagDimension.source, [DataSourceTag.localPrivate]),
+          ..set(DataTagDimension.source, [DataSourceTag.localPrivate])
+          ..set(DataTagDimension.business, businessTags),
       );
       fileItems.add(item);
       totalSize += fileSize;

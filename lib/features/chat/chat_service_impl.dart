@@ -60,6 +60,7 @@ class HttpChatService implements ChatService {
     List<ChatMessage> history, {
     String model = 'deepseek-flash',
     bool search = false,
+    String? systemExtra,
     ChatStreamCallback? onDelta,
   }) async {
     try {
@@ -137,6 +138,13 @@ class HttpChatService implements ChatService {
               '如果用户的问题与该企业相关，请优先基于以上信息回答。',
         });
       }
+      // ── 业务智能体追加上下文（业务域沉淀数据，如"税务"标签下的数据） ──
+      if (systemExtra != null && systemExtra.isNotEmpty) {
+        messages.add({
+          'role': 'system',
+          'content': systemExtra,
+        });
+      }
       if (fetchedText != null && fetchedUrl != null) {
         // 网页正文作为 system 上下文注入，保留完整对话历史
         messages.add({
@@ -155,9 +163,8 @@ class HttpChatService implements ChatService {
         searchContext.writeln('回答请使用中文，并在末尾以“参考资料：”列出主要来源。');
         messages.add({'role': 'system', 'content': searchContext.toString()});
       }
-      messages.addAll(history
-          .map((m) => {'role': m.role, 'content': m.content})
-          .toList());
+      messages.addAll(
+          history.map((m) => {'role': m.role, 'content': m.content}).toList());
       // ── 附件处理 ──
       if (history.isNotEmpty) {
         final last = history.last;
@@ -223,9 +230,8 @@ class HttpChatService implements ChatService {
       // 逐段解析 SSE 流：思考段(reasoning_content)与正文段(content)分开回调
       final reasoningBuf = StringBuffer();
       final contentBuf = StringBuffer();
-      await for (final raw in utf8.decoder
-          .bind(body.stream)
-          .transform(const LineSplitter())) {
+      await for (final raw
+          in utf8.decoder.bind(body.stream).transform(const LineSplitter())) {
         final line = raw.trim();
         if (!line.startsWith('data:')) continue;
         final data = line.substring(5).trim();
@@ -279,7 +285,8 @@ class HttpChatService implements ChatService {
       // ── 联网搜索自动沉淀：搜索成功且有租户ID时，异步沉淀搜索数据，不阻塞回复 ──
       if (sources.isNotEmpty && _tenantId != null && _tenantId!.isNotEmpty) {
         final query = history.isNotEmpty ? history.last.content : '';
-        final title = query.length > 30 ? '${query.substring(0, 30)}...' : query;
+        final title =
+            query.length > 30 ? '${query.substring(0, 30)}...' : query;
         // 沉淀内容 = 输入模型的搜索提炼上下文（格式化的搜索结果）
         final contentBuf = StringBuffer('# 搜索提炼内容\n\n');
         contentBuf.writeln('本次搜索共找到 ${sources.length} 条相关信息，整理如下：\n');
@@ -331,8 +338,7 @@ class HttpChatService implements ChatService {
 
   /// 提取文本中第一个 http(s) 链接；无则返回 null。
   String? _firstUrlIn(String text) {
-    final m = RegExp(
-            r'https?://[^\s\u4e00-\u9fff，。；！？、\u0022\u0027()\[\]{}]+')
+    final m = RegExp(r'https?://[^\s\u4e00-\u9fff，。；！？、\u0022\u0027()\[\]{}]+')
         .firstMatch(text);
     return m?.group(0);
   }
@@ -369,10 +375,8 @@ class HttpChatService implements ChatService {
     var s = html;
     // 去掉 script/style/noscript/svg/iframe/template 整块内容
     s = s.replaceAll(
-        RegExp(
-            r'<(script|style|noscript|svg|iframe|template)[^>]*>.*?</\1>',
-            caseSensitive: false,
-            dotAll: true),
+        RegExp(r'<(script|style|noscript|svg|iframe|template)[^>]*>.*?</\1>',
+            caseSensitive: false, dotAll: true),
         ' ');
     // 去掉注释
     s = s.replaceAll(RegExp(r'<!--.*?-->', dotAll: true), ' ');
@@ -409,7 +413,10 @@ class HttpChatService implements ChatService {
           {
             'role': 'user',
             'content': [
-              {'type': 'text', 'text': 'Perform a web search for the query: $query'},
+              {
+                'type': 'text',
+                'text': 'Perform a web search for the query: $query'
+              },
             ],
           },
         ],
@@ -451,13 +458,32 @@ class HttpChatService implements ChatService {
     // 去除空白和标点，简化匹配
     final cleaned = msg.replaceAll(RegExp(r'[\s，。？！、,.!?\n]'), '');
     const keywords = [
-      '你是谁', '你叫什么', '你叫啥', '你是什么',
-      '介绍一下你自己', '介绍你自己', '自我介绍', '说说你自己',
-      '你的身份', '你是哪个', '你是啥',
-      '你是什么模型', '你用的什么模型', '你基于什么模型', '什么大模型',
-      '你是哪个公司的', '你是哪家公司', '哪个公司开发', '谁开发的你',
-      '你的版本', '版本号', '你是ai吗', '你是人工智能吗',
-      '你是助手吗', '你是管家吗', '智懂你',
+      '你是谁',
+      '你叫什么',
+      '你叫啥',
+      '你是什么',
+      '介绍一下你自己',
+      '介绍你自己',
+      '自我介绍',
+      '说说你自己',
+      '你的身份',
+      '你是哪个',
+      '你是啥',
+      '你是什么模型',
+      '你用的什么模型',
+      '你基于什么模型',
+      '什么大模型',
+      '你是哪个公司的',
+      '你是哪家公司',
+      '哪个公司开发',
+      '谁开发的你',
+      '你的版本',
+      '版本号',
+      '你是ai吗',
+      '你是人工智能吗',
+      '你是助手吗',
+      '你是管家吗',
+      '智懂你',
     ];
     return keywords.any((k) => cleaned.contains(k));
   }

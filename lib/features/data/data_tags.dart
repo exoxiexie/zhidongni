@@ -49,6 +49,54 @@ class DataBusinessTag {
   static const String socialSecurity = '社保';
   static const String supplyChain = '供应链';
 
+  /// 全部 12 个业务域（有序，与业务智能体展示顺序一致）
+  static const List<String> all = [
+    loan,
+    business,
+    tax,
+    judicial,
+    credit,
+    finance,
+    ip,
+    policy,
+    projectApproval,
+    legal,
+    socialSecurity,
+    supplyChain,
+  ];
+
+  /// 关键词规则表：业务域 -> 触发关键词（用于零成本自动打标）
+  static const Map<String, List<String>> _keywordRules = {
+    loan: ['贷款', '融资', '借款', '授信', '抵押', '担保', '银行', '还款', '信贷', '利息'],
+    business: ['工商', '执照', '注册', '股权', '股东', '法人', '变更', '经营范围', '注册资本'],
+    tax: ['税务', '纳税', '发票', '申报表', '完税', '增值税', '所得税', '税负', '税率'],
+    judicial: ['诉讼', '起诉', '判决', '法院', '案件', '被执行', '开庭', '仲裁', '庭审'],
+    credit: ['信用', '征信', '处罚', '异常', '失信', '黑名单', '评级', '信用分'],
+    finance: ['财务', '报表', '利润', '营收', '成本', '现金流', '审计', '资产负债表', '应收账款'],
+    ip: ['专利', '商标', '著作权', '版权', '知识产权', '软著', '发明', '外观设计'],
+    policy: ['政策', '补贴', '申报', '扶持', '专项资金', '优惠', '资助', '奖励'],
+    projectApproval: ['项目', '审批', '立项', '备案', '环评', '招标', '投标', '可研'],
+    legal: ['合同', '协议', '法律', '合规', '条款', '违约', '律师', '法务', '赔偿'],
+    socialSecurity: ['社保', '公积金', '五险', '养老', '医疗', '工伤', '失业', '生育'],
+    supplyChain: ['供应链', '采购', '供应商', '物流', '库存', '订单', '发货', '入库', '仓储'],
+  };
+
+  /// 根据文本关键词匹配业务标签（零模型成本）。
+  /// 命中多个业务域时全部返回（多对多）；匹配不到返回空。
+  static List<String> matchFromText(String text) {
+    if (text.isEmpty) return const [];
+    final result = <String>[];
+    _keywordRules.forEach((tag, keywords) {
+      for (final kw in keywords) {
+        if (text.contains(kw)) {
+          result.add(tag);
+          break;
+        }
+      }
+    });
+    return result;
+  }
+
   const DataBusinessTag._();
 }
 

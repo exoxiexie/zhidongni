@@ -177,12 +177,15 @@ abstract class ChatService {
   /// [model] 指定使用的模型 id，见 [kChatModels]。
   /// [search] 为 true 时，对最新一条用户消息执行联网搜索，
   /// 并把搜索来源注入上下文、在回复末尾附上参考资料。
+  /// [systemExtra] 额外的系统提示词（如业务智能体的业务域上下文），
+  /// 拼接到企业上下文之后一并注入；传入 null 表示不追加。
   /// [onDelta] 提供后按流式逐段回调增量文本（思考段/正文段分开）；
   /// 返回值始终为最终完整正文（兼容非流式调用方）。
   Future<String> sendMessage(
     List<ChatMessage> history, {
     String model = 'deepseek-flash',
     bool search = false,
+    String? systemExtra,
     ChatStreamCallback? onDelta,
   });
 }

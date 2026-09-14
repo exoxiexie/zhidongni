@@ -10,6 +10,8 @@ import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
 import '../chat/business_agent_page.dart';
 import '../chat/chat_page.dart';
+import '../enterprise/enterprise_auth_service.dart';
+import '../enterprise/enterprise_data.dart';
 import '../tabs/database_tab.dart';
 import '../tabs/files_tab.dart';
 import '../tabs/insight_tab.dart';
@@ -32,6 +34,32 @@ class _ShellPageState extends State<ShellPage> {
   final GlobalKey<DatabaseTabState> _databaseTabKey =
       GlobalKey<DatabaseTabState>();
 
+  /// 当前企业统一社会信用代码（租户ID，用于业务上下文按租户隔离加载）
+  String _currentTenantId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTenant();
+  }
+
+  /// 加载当前登录企业的租户ID
+  Future<void> _loadTenant() async {
+    try {
+      final auth = await EnterpriseAuthService.getAuth();
+      if (auth != null) {
+        for (final e in kEnterpriseSeedData) {
+          if (e.id == auth.enterpriseId || e.name == auth.enterpriseName) {
+            if (mounted) setState(() => _currentTenantId = e.creditCode);
+            break;
+          }
+        }
+      }
+    } catch (_) {
+      // 加载失败不影响主框架使用（业务上下文降级为不注入）
+    }
+  }
+
   static const _titles = ['懂你', '数据', '发现', '我的'];
 
   /// 打开对话页（不带指令）
@@ -46,12 +74,13 @@ class _ShellPageState extends State<ShellPage> {
     );
   }
 
-  /// 打开业务智能体详情页
+  /// 打开业务智能体详情页（业务域上下文按当前企业租户加载）
   void openAgent(String title) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => BusinessAgentPage(
           title: title,
+          tenantId: _currentTenantId,
           chatService: widget.chatService!,
           agentService: widget.agentService,
         ),

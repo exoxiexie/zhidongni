@@ -13,6 +13,9 @@ import '../data/public_data_detail_page.dart';
 import '../data/memory_detail_page.dart';
 import '../data/local_data_detail_page.dart';
 import '../data/search_data_history_page.dart';
+import '../data/business_context_service.dart';
+import '../data/business_data_list_page.dart';
+import '../data/data_tags.dart';
 
 class DatabaseTab extends StatefulWidget {
   const DatabaseTab({super.key});
@@ -30,6 +33,21 @@ class DatabaseTabState extends State<DatabaseTab> {
 
   /// 数据视图切换：0=按来源（5类数据），1=按业务（业务维度分类）
   int _dataViewMode = 0;
+
+  /// 各业务域下的数据条数（按业务视图展示）
+  Map<String, int> _businessCounts = {};
+
+  /// 加载各业务域数据条数
+  Future<void> _loadBusinessCounts() async {
+    if (_enterprise?.creditCode.isEmpty == true) return;
+    try {
+      final counts =
+          await BusinessViewService.countByBusiness(_enterprise!.creditCode);
+      if (mounted) setState(() => _businessCounts = counts);
+    } catch (e) {
+      debugPrint('加载业务数据统计失败: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -87,6 +105,7 @@ class DatabaseTabState extends State<DatabaseTab> {
       });
       if (ent?.creditCode.isNotEmpty == true) {
         _loadMemories();
+        _loadBusinessCounts();
       }
     }
   }
@@ -124,7 +143,7 @@ class DatabaseTabState extends State<DatabaseTab> {
                   if (_dataViewMode == 0)
                     _buildDataModules()
                   else
-                    _buildBusinessViewPlaceholder(),
+                    _buildBusinessView(),
                 ],
               ],
             ),
@@ -565,27 +584,134 @@ class DatabaseTabState extends State<DatabaseTab> {
     );
   }
 
-  /// 按业务视图占位（结构已搭好，内容后续填充）
-  Widget _buildBusinessViewPlaceholder() {
+  /// 按业务视图：12 个业务域卡片 + 数据条数，点开进入业务数据列表页
+  Widget _buildBusinessView() {
+    // 业务域卡片定义（与业务智能体一一对应）
+    final cards = [
+      _BusinessCardData(DataBusinessTag.loan, Icons.account_balance_outlined,
+          const Color(0xFFD97706), '贷款融资'),
+      _BusinessCardData(DataBusinessTag.business, Icons.business_outlined,
+          const Color(0xFF2563EB), '工商注册'),
+      _BusinessCardData(DataBusinessTag.tax, Icons.receipt_long_outlined,
+          const Color(0xFF059669), '纳税申报'),
+      _BusinessCardData(DataBusinessTag.judicial, Icons.gavel_outlined,
+          const Color(0xFFDC2626), '诉讼纠纷'),
+      _BusinessCardData(DataBusinessTag.credit, Icons.verified_outlined,
+          const Color(0xFF7C3AED), '信用评级'),
+      _BusinessCardData(DataBusinessTag.finance, Icons.trending_up_outlined,
+          const Color(0xFF0EA5E9), '财务经营'),
+      _BusinessCardData(DataBusinessTag.ip, Icons.lightbulb_outline,
+          const Color(0xFFF59E0B), '知识产权'),
+      _BusinessCardData(DataBusinessTag.policy, Icons.assignment_outlined,
+          const Color(0xFF8B5CF6), '政策申报'),
+      _BusinessCardData(DataBusinessTag.projectApproval,
+          Icons.fact_check_outlined, const Color(0xFF0D9488), '项目审批'),
+      _BusinessCardData(DataBusinessTag.legal, Icons.balance_outlined,
+          const Color(0xFF475569), '合同法律'),
+      _BusinessCardData(DataBusinessTag.socialSecurity, Icons.shield_outlined,
+          const Color(0xFFEF4444), '社保公积金'),
+      _BusinessCardData(DataBusinessTag.supplyChain,
+          Icons.local_shipping_outlined, const Color(0xFF0891B2), '供应链'),
+    ];
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Column(
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            _buildBusinessCard(cards[i]),
+            if (i < cards.length - 1) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 单个业务域卡片
+  Widget _buildBusinessCard(_BusinessCardData card) {
+    final count = _businessCounts[card.tag] ?? 0;
+    return GestureDetector(
+      onTap: () {
+        final creditCode = _enterprise?.creditCode.isNotEmpty == true
+            ? _enterprise!.creditCode
+            : _auth?.enterpriseId ?? '';
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BusinessDataListPage(
+              tenantId: creditCode,
+              businessTag: card.tag,
+            ),
+          ),
+        );
+      },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE4E3DD)),
         ),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Icon(Icons.dashboard_customize_outlined,
-                size: 36, color: Color(0xFFC0C4CC)),
-            SizedBox(height: 12),
-            Text(
-              '按业务分类视图开发中',
-              style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            // 左侧图标
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: card.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(card.icon, size: 26, color: card.color),
             ),
+            const SizedBox(width: 14),
+            // 中间标题+描述
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        card.tag,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1B1C),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: card.color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: card.color,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    card.subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 右侧箭头
+            const Icon(Icons.chevron_right, size: 22, color: Color(0xFFC0C4CC)),
           ],
         ),
       ),
@@ -842,6 +968,16 @@ class _DataModule {
     required this.subtitle,
     this.count,
   });
+}
+
+/// 业务域卡片数据（与业务智能体一一对应）
+class _BusinessCardData {
+  final String tag;
+  final IconData icon;
+  final Color color;
+  final String subtitle;
+
+  const _BusinessCardData(this.tag, this.icon, this.color, this.subtitle);
 }
 
 /// 数据分类模型

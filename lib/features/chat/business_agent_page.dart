@@ -3,23 +3,28 @@
 /// 左上角：向左尖括号返回（与首页顶部卡片箭头同款样式）
 /// 内容区：智能体占位信息 + 对话消息列表
 /// 底部：与对话页完全一致的输入栏（ChatInputBar），可直接对话
+/// 上下文：打开时加载该业务标签（[title]）下已沉淀的数据，
+/// 组装成系统提示词注入对话（BusinessContextService）
 library;
 
 import 'package:flutter/material.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
+import '../data/business_context_service.dart';
 import 'chat_input_bar.dart';
 
 /// 业务智能体详情页
 class BusinessAgentPage extends StatefulWidget {
   final String title;
+  final String tenantId; // 企业统一社会信用代码（业务上下文按租户隔离加载）
   final ChatService chatService;
   final AgentService? agentService;
 
   const BusinessAgentPage({
     super.key,
     required this.title,
+    required this.tenantId,
     required this.chatService,
     this.agentService,
   });
@@ -33,6 +38,35 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
   ChatModel _selectedModel = kChatModels[0];
+
+  /// 业务域上下文（加载完成后注入对话）
+  String? _businessContext;
+
+  /// 上下文加载状态
+  bool _contextLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBusinessContext();
+  }
+
+  /// 加载该业务标签下的沉淀数据，组装为系统提示词上下文
+  Future<void> _loadBusinessContext() async {
+    try {
+      final context = await BusinessContextService.build(
+          tenantId: widget.tenantId, businessTag: widget.title);
+      if (mounted) {
+        setState(() {
+          _businessContext = context;
+          _contextLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('加载业务上下文失败: $e');
+      if (mounted) setState(() => _contextLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -49,10 +83,13 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
       _isLoading = true;
     });
     try {
-      // 智能体单轮对话：先走带工具搜索的 Agent，失败则退回普通对话
+      // 智能体单轮对话：业务域上下文作为系统提示词注入
       final reply = await widget.chatService.sendMessage(
-        _messages.map((m) => ChatMessage(role: m.role, content: m.content)).toList(),
+        _messages
+            .map((m) => ChatMessage(role: m.role, content: m.content))
+            .toList(),
         model: _selectedModel.id,
+        systemExtra: _businessContext,
       );
       if (mounted) {
         setState(() {
@@ -63,8 +100,8 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(
-              role: 'assistant', content: '请求失败，请稍后重试（$e）'));
+          _messages
+              .add(ChatMessage(role: 'assistant', content: '请求失败，请稍后重试（$e）'));
           _isLoading = false;
         });
       }
@@ -128,6 +165,8 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
 
   /// 智能体占位信息
   Widget _buildEmptyAgent(BuildContext context) {
+    final subtitle =
+        _contextLoading ? '正在加载本业务域沉淀数据…' : '已加载业务域数据上下文，可以在下方直接对话';
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -152,9 +191,9 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            '功能开发中，你可以在下方直接对话',
-            style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),
         ],
       ),

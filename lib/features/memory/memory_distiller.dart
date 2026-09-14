@@ -11,6 +11,7 @@
 ///   "weight": 0-100,                 // 重要程度
 ///   "tags": ["标签"],
 ///   "category": "分类",
+///   "business_tags": ["业务标签"],    // 0-3个，从12个业务域中选择
 ///   "content": "Markdown 正文（要点式）"
 /// }
 library;
@@ -21,6 +22,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../contracts/api_config.dart';
+import '../data/data_tags.dart';
 import '../storage/memory_store.dart';
 
 /// 记忆提炼服务
@@ -56,13 +58,11 @@ class MemoryDistiller {
     try {
       // 已有记忆（id + 标题），用于去重合并
       final existing = await MemoryStore.listAll(tenantId);
-      final existingInfo = existing
-          .map((m) => '${m.id}|${m.title}')
-          .join('\n');
+      final existingInfo = existing.map((m) => '${m.id}|${m.title}').join('\n');
       final input = conversationText.length <= _maxInputChars
           ? conversationText
-          : conversationText.substring(
-              conversationText.length - _maxInputChars);
+          : conversationText
+              .substring(conversationText.length - _maxInputChars);
 
       final resp = await _dio.post(
         ApiConfig.chatCompletionsUrl,
@@ -86,15 +86,20 @@ class MemoryDistiller {
                   '- 格式：{"has_memory": true或false, "update_id": "与已有记忆重复时填该记忆id，否则不填", '
                   '"title": "15字以内的简洁标题", "weight": 0到100的整数（越重要分越高）, '
                   '"tags": ["标签1", "标签2"], "category": "分类（如：产品定位/企业管理/用户偏好/业务数据/其他）", '
+                  '"business_tags": ["业务标签"], '
                   '"content": "Markdown正文，要点式，简洁完整，包含关键结论与细节"}\n'
+                  '- business_tags：从【业务域】中选择本条记忆最相关的业务标签，最多3个，'
+                  '无法确定归属时可为空数组[]。业务域包括：贷款、工商、税务、司法、信用、财务、'
+                  '知识产权、政策申报、项目审批、法律、社保、供应链\n'
                   '- 如果对话没有值得记住的内容，has_memory 必须为 false，其余字段可省略\n'
                   '- update_id 只能从【已有记忆】列表中选择，用于把新内容合并进旧记忆（保留旧记忆 id），'
                   '若不存在重复记忆则不填',
             },
             {
               'role': 'user',
-              'content': '【已有记忆】\n${existingInfo.isEmpty ? '（暂无）' : existingInfo}\n\n'
-                  '【对话内容】\n$input',
+              'content':
+                  '【已有记忆】\n${existingInfo.isEmpty ? '（暂无）' : existingInfo}\n\n'
+                      '【对话内容】\n$input',
             },
           ],
         },
@@ -115,10 +120,12 @@ class MemoryDistiller {
       final result = parseResult(text);
       // 自动提炼时，解析失败或 has_memory=false 则不保存；手动提炼（forceSave）时强制保存
       if (result == null && !forceSave) {
-        lastError = '解析模型输出失败，返回内容：${text.substring(0, text.length > 200 ? 200 : text.length)}';
+        lastError =
+            '解析模型输出失败，返回内容：${text.substring(0, text.length > 200 ? 200 : text.length)}';
         return false;
       }
-      if (result != null && result['has_memory'] != true && !forceSave) return false;
+      if (result != null && result['has_memory'] != true && !forceSave)
+        return false;
 
       // ── 合并更新：命中已有记忆则更新，否则新建 ──
       final updateId = result?['update_id']?.toString() ?? '';
@@ -137,15 +144,15 @@ class MemoryDistiller {
           : '对话记忆';
       final weight = int.tryParse(result?['weight']?.toString() ?? '') ?? 50;
       final tags = _parseTags(result?['tags']);
-      final category =
-          result?['category']?.toString().trim().isNotEmpty == true
-              ? result!['category']!.toString().trim()
-              : '未分类';
+      final category = result?['category']?.toString().trim().isNotEmpty == true
+          ? result!['category']!.toString().trim()
+          : '未分类';
       var content = result?['content']?.toString().trim() ?? '';
 
       // 手动提炼（forceSave）时，如果 AI 没有输出内容或解析失败，用对话摘要作为默认内容
       if (forceSave && content.isEmpty) {
-        final summary = input.length > 500 ? '${input.substring(0, 500)}...' : input;
+        final summary =
+            input.length > 500 ? '${input.substring(0, 500)}...' : input;
         content = '## 对话摘要\n\n$summary';
       }
 
@@ -154,6 +161,9 @@ class MemoryDistiller {
         tags.add('对话提炼');
       }
 
+      // 业务标签：只保留 12 个合法业务域值，其余丢弃
+      final businessTags = _parseBusinessTags(result?['business_tags']);
+
       if (existingItem != null) {
         existingItem.title = title;
         existingItem.weight = weight.clamp(0, 100);
@@ -161,6 +171,9 @@ class MemoryDistiller {
         existingItem.category = category;
         existingItem.content = content;
         existingItem.source = source;
+        if (businessTags.isNotEmpty) {
+          existingItem.dataTags.set(DataTagDimension.business, businessTags);
+        }
         await MemoryStore.save(tenantId, existingItem);
       } else {
         final item = MemoryItem(
@@ -172,6 +185,9 @@ class MemoryDistiller {
           source: source,
           content: content,
         );
+        if (businessTags.isNotEmpty) {
+          item.dataTags.set(DataTagDimension.business, businessTags);
+        }
         await MemoryStore.save(tenantId, item);
       }
       return true;
@@ -221,5 +237,32 @@ class MemoryDistiller {
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
+  }
+
+  /// 解析业务标签：只保留 12 个合法业务域值（去重、限 3 个）
+  static List<String> _parseBusinessTags(dynamic value) {
+    const valid = {
+      DataBusinessTag.loan,
+      DataBusinessTag.business,
+      DataBusinessTag.tax,
+      DataBusinessTag.judicial,
+      DataBusinessTag.credit,
+      DataBusinessTag.finance,
+      DataBusinessTag.ip,
+      DataBusinessTag.policy,
+      DataBusinessTag.projectApproval,
+      DataBusinessTag.legal,
+      DataBusinessTag.socialSecurity,
+      DataBusinessTag.supplyChain,
+    };
+    final raw = _parseTags(value);
+    final result = <String>[];
+    for (final t in raw) {
+      if (valid.contains(t) && !result.contains(t)) {
+        result.add(t);
+      }
+      if (result.length >= 3) break;
+    }
+    return result;
   }
 }

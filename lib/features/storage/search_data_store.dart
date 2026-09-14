@@ -252,6 +252,10 @@ class SearchDataStore {
     final dir = await _dir(tenantId);
     final file = File(p.join(dir, fileName));
 
+    // 业务标签：根据 标题/搜索词/内容 关键词匹配（零模型成本，用户可手改）
+    final businessTags =
+        DataBusinessTag.matchFromText('$title $searchQuery $content');
+
     final item = SearchDataItem(
       id: id,
       title: title,
@@ -263,9 +267,10 @@ class SearchDataStore {
       sources: sources,
       createdAt: now,
       updatedAt: now,
-      // 统一标签：来源标签固定为"联网搜索"（业务标签由用户/提炼时打）
+      // 统一标签：来源标签固定为"联网搜索"（业务标签由关键词规则/提炼时打）
       dataTags: DataTags()
-        ..set(DataTagDimension.source, [DataSourceTag.webSearch]),
+        ..set(DataTagDimension.source, [DataSourceTag.webSearch])
+        ..set(DataTagDimension.business, businessTags),
     );
 
     await file.writeAsString(_serialize(item));
