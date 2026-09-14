@@ -57,7 +57,7 @@ class InsightTab extends StatelessWidget {
     );
   }
 
-  /// 顶部大卡片：对话 | 洞察 两个板块并排
+  /// 顶部大卡片：对话 | 洞察 上下两个板块
   Widget _buildTopCard(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -65,113 +65,126 @@ class InsightTab extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // 左：对话板块（浅蓝渐变，左浅右略深）
-          Expanded(
-            child: GestureDetector(
-              onTap: onOpenChat,
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [Color(0xFFBFD9F2), Color(0xFF8FB8E0)],
+          // 上：对话板块（浅蓝渐变，左浅右略深）
+          GestureDetector(
+            onTap: onOpenChat,
+            child: Container(
+              margin: const EdgeInsets.all(2),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Color(0xFFBFD9F2), Color(0xFF8FB8E0)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  // 图标
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.chat_bubble_outline,
+                        size: 22, color: Color(0xFF1B3A5C)),
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 图标
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.55),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.chat_bubble_outline,
-                          size: 22, color: Color(0xFF1B3A5C)),
+                  const SizedBox(width: 12),
+                  // 标题和小字
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '对话',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1B3A5C),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '与智懂你 AI 管家对话',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: const Color(0xFF1B3A5C).withOpacity(0.75),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      '对话',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B3A5C),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '与智懂你 AI 管家对话',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.4,
-                        color: const Color(0xFF1B3A5C).withOpacity(0.75),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  // 右侧箭头
+                  const Icon(Icons.arrow_forward_ios,
+                      size: 16, color: Color(0xFF1B3A5C)),
+                ],
               ),
             ),
           ),
-          // 中间竖分隔线
-          const SizedBox(
-            height: 56,
-            child: VerticalDivider(
-              width: 1,
-              thickness: 1,
-              color: Color(0xFFE4E3DD),
-            ),
+          // 分隔线
+          const Padding(
+            padding: EdgeInsets.only(left: 56),
+            child: Divider(height: 1, color: Color(0xFFE4E3DD)),
           ),
-          // 右：洞察板块
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '洞察')),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 图标
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5B7FD4),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.auto_awesome,
-                          size: 22, color: Colors.white),
+          // 下：洞察板块
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const _PlaceholderPage(title: '洞察')),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  // 图标
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5B7FD4),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      '洞察',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1B1C),
-                      ),
+                    child:
+                        const Icon(Icons.auto_awesome, size: 20, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  // 标题和副标题
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '洞察',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF1A1B1C),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          '基于企业数据生成分析报告',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    const Text(
-                      '基于企业数据生成分析报告',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.4,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  // 右侧箭头
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Color(0xFFC4C4C4),
+                  ),
+                ],
               ),
             ),
           ),
