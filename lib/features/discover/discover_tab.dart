@@ -430,7 +430,7 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
             isLoading: _isChatting,
             selectedModel: kChatModels[0],
             showTopBar: false,
-            hintText: '输入你要搜索的内容…',
+            hintText: '你要找什么？智懂你AI 帮你搞定',
             pendingAttachment:
                 _pendingAttachment != null ? _buildAttachmentChip() : null,
             onSend: _sendPurchaseQuery,
