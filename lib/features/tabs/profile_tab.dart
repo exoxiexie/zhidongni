@@ -197,17 +197,12 @@ class _ProfileTabState extends State<ProfileTab> {
           }
         }
         final creditCode = ent?.creditCode ?? auth?.enterpriseId ?? '';
-        final companyStatus = ent?.status.isNotEmpty == true ? ent!.status : '存续';
 
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
-          appBar: AppBar(
-            title: const Text('我的'),
-            centerTitle: true,
-            backgroundColor: Colors.white,
-            elevation: 0.5,
-          ),
-          body: ListView(
+          body: SafeArea(
+            top: false,
+            child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
               // === 顶部企业信息卡片（浅色） ===
@@ -248,39 +243,15 @@ class _ProfileTabState extends State<ProfileTab> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              // 经营状态
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  companyStatus,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF10B981),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // 统一社会信用代码
-                              Expanded(
-                                child: Text(
-                                  '信用代码：$creditCode',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF6B7280),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                          // 统一社会信用代码
+                          Text(
+                            '信用代码：$creditCode',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B7280),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -298,7 +269,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     _ListItem(
                       icon: Icons.manage_accounts,
                       iconColor: const Color(0xFF5B7FD4),
-                      title: '管理员管理',
+                      title: '管理员',
                       subtitle: '创建/编辑/删除子管理员',
                       onTap: () {
                         Navigator.of(context).push(
@@ -369,6 +340,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 ),
               ],
             ],
+            ),
           ),
         );
       },

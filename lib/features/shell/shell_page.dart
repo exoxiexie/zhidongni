@@ -102,7 +102,7 @@ class _ShellPageState extends State<ShellPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titles[_index]),
+        title: Text(_index == 3 ? '' : _titles[_index]),
         centerTitle: true,
         elevation: 0,
         automaticallyImplyLeading: false,
