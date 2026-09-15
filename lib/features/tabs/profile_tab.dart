@@ -183,7 +183,7 @@ class _ProfileTabState extends State<ProfileTab> {
           body: SafeArea(
             top: false,
             child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.only(top: 4, bottom: 12),
             children: [
               // === 顶部企业信息卡片（浅色） ===
               Container(
@@ -195,15 +195,15 @@ class _ProfileTabState extends State<ProfileTab> {
                 ),
                 child: Row(
                   children: [
-                    // 企业头像
+                    // 用户头像（圆形）
                     Container(
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
                         color: const Color(0xFF5B7FD4).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.business,
+                      child: const Icon(Icons.person,
                           size: 30, color: Color(0xFF5B7FD4)),
                     ),
                     const SizedBox(width: 14),
