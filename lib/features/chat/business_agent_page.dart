@@ -577,6 +577,51 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     );
   }
 
+  // === 附件预览 chip（与通用对话页一致） ===
+  Widget _buildAttachmentChip() {
+    final att = _pendingAttachment!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0x0F000000),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (att.type == ChatAttachmentType.image && att.filePath != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.file(
+                File(att.filePath!),
+                width: 36,
+                height: 36,
+                fit: BoxFit.cover,
+              ),
+            )
+          else
+            const Icon(Icons.insert_drive_file_outlined,
+                size: 20, color: Color(0xAA5B7FD4)),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: Text(
+              att.name,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, color: Color(0xCC1A1B1C)),
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => setState(() => _pendingAttachment = null),
+            child: const Icon(Icons.close, size: 16, color: Color(0x991A1B1C)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -623,6 +668,8 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
           ChatInputBar(
             controller: _controller,
             isLoading: _isLoading,
+            pendingAttachment:
+                _pendingAttachment != null ? _buildAttachmentChip() : null,
             selectedModel: _selectedModel,
             onModelChanged: (m) {
               setState(() => _selectedModel = m);
