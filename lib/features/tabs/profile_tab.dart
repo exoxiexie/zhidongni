@@ -181,9 +181,8 @@ class _ProfileTabState extends State<ProfileTab> {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: SafeArea(
-            top: false,
             child: ListView(
-            padding: const EdgeInsets.only(top: 4, bottom: 12),
+            padding: const EdgeInsets.only(top: 8, bottom: 12),
             children: [
               // === 顶部企业信息卡片（浅色） ===
               Container(

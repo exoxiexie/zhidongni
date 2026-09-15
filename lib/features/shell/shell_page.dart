@@ -101,12 +101,14 @@ class _ShellPageState extends State<ShellPage> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_index == 3 ? '' : _titles[_index]),
-        centerTitle: true,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
+      appBar: _index == 3
+          ? null
+          : AppBar(
+              title: Text(_titles[_index]),
+              centerTitle: true,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+            ),
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
