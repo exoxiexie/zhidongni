@@ -11,10 +11,10 @@ import '../../contracts/chat_service.dart';
 import '../chat/business_agent_page.dart';
 import '../chat/chat_page.dart';
 import '../data/business_seed_data.dart';
+import '../discover/discover_tab.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
 import '../tabs/database_tab.dart';
-import '../tabs/files_tab.dart';
 import '../tabs/insight_tab.dart';
 import '../tabs/profile_tab.dart';
 
@@ -96,7 +96,7 @@ class _ShellPageState extends State<ShellPage> {
     final pages = [
       InsightTab(onOpenChat: openChat, onOpenAgent: openAgent),
       DatabaseTab(key: _databaseTabKey),
-      const FilesTab(),
+      DiscoverTab(chatService: widget.chatService, agentService: widget.agentService),
       const ProfileTab(),
     ];
 
