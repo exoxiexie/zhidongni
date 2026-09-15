@@ -29,6 +29,26 @@ class SessionDao {
     return maps.map((m) => SessionEntity.fromMap(m)).toList();
   }
 
+  /// 获取指定租户+业务标签的会话（业务智能体历史对话），按更新时间倒序
+  /// [createdBy] 不为空时只查该人创建的（admin 隔离）
+  Future<List<SessionEntity>> findByTenantAndBusiness(
+    String tenantId,
+    String businessTag, {
+    String? createdBy,
+  }) async {
+    final maps = await _db.query(
+      'sessions',
+      where: createdBy != null
+          ? 'tenant_id = ? AND business_tag = ? AND created_by = ?'
+          : 'tenant_id = ? AND business_tag = ?',
+      whereArgs: createdBy != null
+          ? [tenantId, businessTag, createdBy]
+          : [tenantId, businessTag],
+      orderBy: 'updated_at DESC',
+    );
+    return maps.map((m) => SessionEntity.fromMap(m)).toList();
+  }
+
   /// 根据ID获取会话
   Future<SessionEntity?> findById(String id) async {
     final maps = await _db.query(

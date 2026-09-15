@@ -8,6 +8,7 @@ class SessionEntity {
   final int messageCount;
   final String? lastExtractedMessageId; // 最后一次提炼时的消息ID（用于增量提炼）
   final String? createdBy; // 创建该会话的管理员手机号
+  final String? businessTag; // 业务智能体标签（null=通用对话）
 
   const SessionEntity({
     required this.id,
@@ -18,6 +19,7 @@ class SessionEntity {
     this.messageCount = 0,
     this.lastExtractedMessageId,
     this.createdBy,
+    this.businessTag,
   });
 
   Map<String, dynamic> toMap() => {
@@ -29,6 +31,7 @@ class SessionEntity {
         'message_count': messageCount,
         'last_extracted_message_id': lastExtractedMessageId,
         'created_by': createdBy,
+        'business_tag': businessTag,
       };
 
   factory SessionEntity.fromMap(Map<String, dynamic> map) => SessionEntity(
@@ -40,6 +43,7 @@ class SessionEntity {
         messageCount: map['message_count'] as int? ?? 0,
         lastExtractedMessageId: map['last_extracted_message_id'] as String?,
         createdBy: map['created_by'] as String?,
+        businessTag: map['business_tag'] as String?,
       );
 
   SessionEntity copyWith({
