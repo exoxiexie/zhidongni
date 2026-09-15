@@ -1,13 +1,18 @@
 /// 业务智能体详情页
 ///
 /// 左上角：返回箭头 + 双横杠菜单（打开左侧抽屉，显示本智能体历史对话）
+/// 右上角：新建对话按钮
 /// 内容区：智能体占位信息 + 对话消息列表（持久化到数据库）
-/// 底部：与对话页完全一致的输入栏（ChatInputBar）
+/// 底部：与对话页完全一致的输入栏（ChatInputBar），支持图片/文件/文件夹附件
 /// 上下文：打开时加载该业务标签（[title]）下已沉淀的数据，
 /// 组装成系统提示词注入对话（BusinessContextService）
 library;
 
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
@@ -18,12 +23,13 @@ import '../storage/database/dao/message_dao.dart';
 import '../storage/database/dao/session_dao.dart';
 import '../storage/database/models/message_entity.dart';
 import '../storage/database/models/session_entity.dart';
+import 'attachment_parser.dart';
 import 'chat_input_bar.dart';
 
 /// 业务智能体详情页
 class BusinessAgentPage extends StatefulWidget {
   final String title;
-  final String tenantId; // 企业统一社会信用代码（业务上下文按租户隔离加载）
+  final String tenantId;
   final ChatService chatService;
   final AgentService? agentService;
 
@@ -59,6 +65,9 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
   List<ChatMessage> _messages = [];
   String? _currentUserPhone;
 
+  // === 附件 ===
+  ChatAttachment? _pendingAttachment;
+
   @override
   void initState() {
     super.initState();
@@ -72,7 +81,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     await _loadSessions();
   }
 
-  /// 加载该业务标签下的沉淀数据，组装为系统提示词上下文
   Future<void> _loadBusinessContext() async {
     try {
       final context = await BusinessContextService.build(
@@ -91,7 +99,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     }
   }
 
-  /// 加载本智能体的会话列表
   Future<void> _loadSessions() async {
     try {
       final isOwner = (await EnterpriseAuthService.getAuth())?.role == 'owner';
@@ -103,7 +110,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
               createdBy: _currentUserPhone);
       if (mounted) {
         setState(() => _sessions = list);
-        // 如果有会话，加载最近一个；否则新建一个
         if (list.isNotEmpty) {
           _switchSession(list.first);
         } else {
@@ -115,7 +121,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     }
   }
 
-  /// 新建会话
   void _createNewSession() async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final session = SessionEntity(
@@ -132,12 +137,12 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
       setState(() {
         _currentSession = session;
         _messages = [];
+        _pendingAttachment = null;
         _sessions.insert(0, session);
       });
     }
   }
 
-  /// 切换会话，加载历史消息
   void _switchSession(SessionEntity session) async {
     final msgs = await _messageDao.findBySession(session.id);
     if (mounted) {
@@ -146,6 +151,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
         _messages = msgs
             .map((m) => ChatMessage(role: m.role, content: m.content))
             .toList();
+        _pendingAttachment = null;
       });
       _scrollToBottom();
     }
@@ -158,14 +164,251 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     super.dispose();
   }
 
+  // === 附件功能（与通用对话页一致） ===
+
+  void _showAttachmentSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: Color(0xFF5B7FD4)),
+              title: const Text('从相册选择图片'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined,
+                  color: Color(0xFF5B7FD4)),
+              title: const Text('拍照'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file_outlined,
+                  color: Color(0xFF5B7FD4)),
+              title: const Text('选择文件（可多选，PDF / Word / TXT）'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFile();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_outlined,
+                  color: Color(0xFF5B7FD4)),
+              title: const Text('选择文件夹（自动解析里面所有文档）'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFolder();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final x = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1280,
+        imageQuality: 70,
+      );
+      if (x == null || !mounted) return;
+      setState(() {
+        _pendingAttachment = ChatAttachment(
+          type: ChatAttachmentType.image,
+          name: x.name,
+          filePath: x.path,
+        );
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('选择图片失败：$e')),
+      );
+    }
+  }
+
+  Future<void> _pickFile() async {
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'docx', 'txt', 'md'],
+        withData: true,
+        allowMultiple: true,
+      );
+      final files = res?.files;
+      if (files == null || files.isEmpty || !mounted) return;
+
+      setState(() {
+        _pendingAttachment = ChatAttachment(
+          type: ChatAttachmentType.document,
+          name: files.length == 1 ? files.first.name : '${files.length} 个文件',
+          filePath: files.length == 1 ? files.first.path : null,
+        );
+      });
+
+      try {
+        final buffer = StringBuffer();
+        for (var i = 0; i < files.length; i++) {
+          final file = files[i];
+          final bytes = file.bytes;
+          final path = file.path;
+          final ext = file.extension?.toLowerCase() ??
+              (file.name.contains('.')
+                  ? file.name.toLowerCase().split('.').last
+                  : (path != null && path.contains('.')
+                      ? path.toLowerCase().split('.').last
+                      : ''));
+
+          final String text;
+          if (bytes != null && bytes.isNotEmpty) {
+            text = await extractDocumentTextFromBytes(bytes, ext);
+          } else if (path != null) {
+            text = await extractDocumentText(path);
+          } else {
+            buffer.writeln('===== ${file.name}（无法读取文件内容）=====');
+            if (i < files.length - 1) buffer.writeln();
+            continue;
+          }
+
+          buffer.writeln('===== ${file.name} =====');
+          buffer.writeln(text);
+          if (i < files.length - 1) buffer.writeln();
+        }
+        final merged = buffer.toString();
+        if (mounted) {
+          setState(() {
+            _pendingAttachment = _pendingAttachment?.copyWith(text: merged);
+          });
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _pendingAttachment = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('文件解析失败：$e')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('选择文件失败：$e')),
+      );
+    }
+  }
+
+  Future<void> _pickFolder() async {
+    try {
+      final dirPath = await FilePicker.platform.getDirectoryPath();
+      if (dirPath == null || !mounted) return;
+
+      final dir = Directory(dirPath);
+      bool accessible = false;
+      try {
+        accessible = await dir.exists();
+      } catch (_) {
+        accessible = false;
+      }
+
+      if (!accessible) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('U 盘/移动硬盘文件夹暂不支持直接遍历，请改用「选择文件」方式'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      final supportedFiles = <File>[];
+      try {
+        await for (final entity
+            in dir.list(recursive: true, followLinks: false)) {
+          if (entity is File) {
+            final ext = entity.path.toLowerCase().split('.').last;
+            if (kSupportedDocExts.contains(ext)) {
+              supportedFiles.add(entity);
+            }
+          }
+        }
+      } catch (_) {}
+
+      if (supportedFiles.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('该文件夹下没有支持的文档')),
+        );
+        return;
+      }
+
+      setState(() {
+        _pendingAttachment = ChatAttachment(
+          type: ChatAttachmentType.document,
+          name: '${dir.path.split('/').last}（${supportedFiles.length} 个文件）',
+          filePath: dirPath,
+        );
+      });
+
+      try {
+        final buffer = StringBuffer();
+        for (var i = 0; i < supportedFiles.length; i++) {
+          final file = supportedFiles[i];
+          final text = await extractDocumentText(file.path);
+          buffer.writeln('===== ${file.path.split('/').last} =====');
+          buffer.writeln(text);
+          if (i < supportedFiles.length - 1) buffer.writeln();
+        }
+        final merged = buffer.toString();
+        if (mounted) {
+          setState(() {
+            _pendingAttachment = _pendingAttachment?.copyWith(text: merged);
+          });
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _pendingAttachment = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('文件夹解析失败：$e')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('选择文件夹失败：$e')),
+      );
+    }
+  }
+
   Future<void> _send() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _isLoading || _currentSession == null) return;
+    final attachment = _pendingAttachment;
+    if ((text.isEmpty && attachment == null) || _isLoading || _currentSession == null) return;
     final sessionId = _currentSession!.id;
 
+    final userMsg = ChatMessage(
+      role: 'user',
+      content: text,
+      attachment: attachment,
+    );
+
     setState(() {
-      _messages.add(ChatMessage(role: 'user', content: text));
+      _messages.add(userMsg);
       _controller.clear();
+      _pendingAttachment = null;
       _isLoading = true;
     });
     _scrollToBottom();
@@ -184,7 +427,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     try {
       final reply = await widget.chatService.sendMessage(
         _messages
-            .map((m) => ChatMessage(role: m.role, content: m.content))
+            .map((m) => ChatMessage(role: m.role, content: m.content, attachment: m.attachment))
             .toList(),
         model: _selectedModel.id,
         systemExtra: _businessContext,
@@ -196,7 +439,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
         });
         _scrollToBottom();
 
-        // 保存助手回复到数据库
         final now2 = DateTime.now().millisecondsSinceEpoch;
         await _messageDao.insert(MessageEntity(
           id: 'a$now2',
@@ -219,7 +461,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     }
   }
 
-  /// 双杠菜单图标（上面长、下面短，与通用对话页同款）
   Widget _buildMenuIcon() {
     return Center(
       child: InkWell(
@@ -253,13 +494,11 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     );
   }
 
-  /// 左侧抽屉（本智能体历史对话）
   Widget _buildDrawer() {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.8,
       child: Column(
         children: [
-          // 顶部：新建对话按钮
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -284,7 +523,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
             ),
           ),
           const Divider(height: 1),
-          // 历史对话列表
           Expanded(
             child: _sessions.isEmpty
                 ? const Center(
@@ -365,7 +603,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
             ],
           ),
         ),
-        // 右上角：新建对话
         actions: [
           IconButton(
             icon: const Icon(Icons.edit, size: 22),
@@ -390,11 +627,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
             onModelChanged: (m) {
               setState(() => _selectedModel = m);
             },
-            onAddAttachment: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('智能体附件功能开发中')),
-              );
-            },
+            onAddAttachment: _showAttachmentSheet,
             onSend: _send,
             onConnectComputer: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -412,7 +645,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     );
   }
 
-  /// 智能体占位信息
   Widget _buildEmptyAgent(BuildContext context) {
     final subtitle =
         _contextLoading ? '正在加载本业务域沉淀数据…' : '已加载业务域数据上下文，可以在下方直接对话';
@@ -463,7 +695,6 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
     );
   }
 
-  /// 自动滚动到消息列表底部
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -477,7 +708,7 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
   }
 }
 
-/// 单条消息气泡
+/// 单条消息气泡（支持附件展示）
 class _Bubble extends StatelessWidget {
   final ChatMessage message;
 
@@ -486,6 +717,7 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.role == 'user';
+    final att = message.attachment;
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -503,20 +735,86 @@ class _Bubble extends StatelessWidget {
             bottomRight: Radius.circular(isUser ? 4 : 16),
           ),
         ),
-        child: Text(
-          message.content,
-          style: TextStyle(
-            fontSize: 15,
-            height: 1.4,
-            color: isUser ? Colors.white : const Color(0xFF1A1B1C),
-          ),
+        child: Column(
+          crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (att != null)
+              _AttachmentView(attachment: att, isUser: isUser),
+            if (message.content.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: att != null ? 8 : 0),
+                child: Text(
+                  message.content,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.4,
+                    color: isUser ? Colors.white : const Color(0xFF1A1B1C),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// 思考中气泡
+/// 消息内的附件展示
+class _AttachmentView extends StatelessWidget {
+  final ChatAttachment attachment;
+  final bool isUser;
+
+  const _AttachmentView({required this.attachment, required this.isUser});
+
+  @override
+  Widget build(BuildContext context) {
+    if (attachment.type == ChatAttachmentType.image &&
+        attachment.filePath != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180, maxHeight: 240),
+          child: Image.file(
+            File(attachment.filePath!),
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+    // 文档附件
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isUser
+            ? Colors.white.withOpacity(0.2)
+            : const Color(0xFF5B7FD4).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.insert_drive_file,
+              size: 18,
+              color: isUser ? Colors.white : const Color(0xFF5B7FD4)),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              attachment.name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                color: isUser ? Colors.white : const Color(0xFF1A1B1C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ThinkingBubble extends StatelessWidget {
   const _ThinkingBubble();
 
