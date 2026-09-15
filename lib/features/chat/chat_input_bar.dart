@@ -24,6 +24,12 @@ class ChatInputBar extends StatelessWidget {
   final VoidCallback? onConnectComputer;
   final VoidCallback? onSkillSelect;
 
+  /// 是否显示顶部工具行（模型选择+连接电脑+技能选择），默认 true
+  final bool showTopBar;
+
+  /// 输入框提示文字，默认"输入你的问题…"
+  final String hintText;
+
   const ChatInputBar({
     super.key,
     required this.controller,
@@ -35,6 +41,8 @@ class ChatInputBar extends StatelessWidget {
     this.onSend,
     this.onConnectComputer,
     this.onSkillSelect,
+    this.showTopBar = true,
+    this.hintText = '输入你的问题…',
   });
 
   @override
@@ -50,60 +58,62 @@ class ChatInputBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (pendingAttachment != null) pendingAttachment!,
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0x0F000000),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 2),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<ChatModel>(
-                        value: selectedModel,
-                        isDense: true,
-                        padding: EdgeInsets.zero,
-                        dropdownColor: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        icon: const Icon(Icons.arrow_drop_down,
-                            size: 18, color: Color(0x881A1B1C)),
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xCC1A1B1C)),
-                        items: kChatModels.map((m) {
-                          return DropdownMenuItem<ChatModel>(
-                            value: m,
-                            child: Text(m.label,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12)),
-                          );
-                        }).toList(),
-                        onChanged: isLoading
-                            ? null
-                            : (m) {
-                                if (m != null) onModelChanged?.call(m);
-                              },
+            if (showTopBar) ...[
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0x0F000000),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 2),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<ChatModel>(
+                          value: selectedModel,
+                          isDense: true,
+                          padding: EdgeInsets.zero,
+                          dropdownColor: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          icon: const Icon(Icons.arrow_drop_down,
+                              size: 18, color: Color(0x881A1B1C)),
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xCC1A1B1C)),
+                          items: kChatModels.map((m) {
+                            return DropdownMenuItem<ChatModel>(
+                              value: m,
+                              child: Text(m.label,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12)),
+                            );
+                          }).toList(),
+                          onChanged: isLoading
+                              ? null
+                              : (m) {
+                                  if (m != null) onModelChanged?.call(m);
+                                },
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFeatureButton(
-                    icon: Icons.computer,
-                    label: '连接电脑',
-                    onTap: onConnectComputer,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFeatureButton(
-                    icon: Icons.extension,
-                    label: '技能选择',
-                    onTap: onSkillSelect,
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    _buildFeatureButton(
+                      icon: Icons.computer,
+                      label: '连接电脑',
+                      onTap: onConnectComputer,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFeatureButton(
+                      icon: Icons.extension,
+                      label: '技能选择',
+                      onTap: onSkillSelect,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
+              const SizedBox(height: 6),
+            ],
             Container(
               decoration: BoxDecoration(
                 color: const Color(0x0F000000),
@@ -120,9 +130,9 @@ class ChatInputBar extends StatelessWidget {
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => onSend?.call(),
                     style: const TextStyle(fontSize: 15),
-                    decoration: const InputDecoration(
-                      hintText: '输入你的问题…',
-                      hintStyle: TextStyle(color: Color(0x661A1B1C)),
+                    decoration: InputDecoration(
+                      hintText: hintText,
+                      hintStyle: const TextStyle(color: Color(0x661A1B1C)),
                       isDense: true,
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 4),

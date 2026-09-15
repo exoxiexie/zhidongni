@@ -151,6 +151,8 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
             controller: _chatController,
             isLoading: _isChatting,
             selectedModel: kChatModels[0],
+            showTopBar: false,
+            hintText: '输入你要搜索的内容…',
             onSend: _sendPurchaseQuery,
             onAddAttachment: () {},
             onConnectComputer: () {},
