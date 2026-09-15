@@ -38,7 +38,25 @@ class BusinessContextService {
     required String tenantId,
     required String businessTag,
   }) async {
-    final buf = StringBuffer('【业务域上下文：$businessTag】\n');
+    final buf = StringBuffer();
+
+    // ── 0. 企业主体信息（身份锚定，所有智能体都带，简短精炼） ──
+    try {
+      final ent = kEnterpriseSeedData.firstWhere(
+        (e) => e.creditCode == tenantId,
+        orElse: () => kEnterpriseSeedData[0],
+      );
+      if (ent.id.isNotEmpty) {
+        buf.writeln('【企业主体】${ent.name}');
+        buf.writeln('统一社会信用代码：${ent.creditCode}');
+        buf.writeln('法定代表人：${ent.legalPerson}，成立日期：${ent.foundedAt}');
+        buf.writeln('注册资本：${ent.registeredCapital}，企业类型：${ent.enterpriseType}');
+        buf.writeln('所属行业：${ent.industry}，经营状态：${ent.status}');
+        buf.writeln('');
+      }
+    } catch (_) {}
+
+    buf.writeln('【业务域上下文：$businessTag】');
 
     // ── 1. 对话记忆（权重≥阈值，取前 N） ──
     try {
@@ -140,22 +158,6 @@ class BusinessContextService {
   /// 信息公开部分：按业务域匹配企业公开数据
   static String _buildPublicPart(String tenantId, String businessTag) {
     final parts = <String>[];
-
-    // 工商：企业主体照面信息
-    if (businessTag == DataBusinessTag.business) {
-      try {
-        final ent = kEnterpriseSeedData.firstWhere(
-          (e) => e.creditCode == tenantId,
-          orElse: () => kEnterpriseSeedData[0],
-        );
-        if (ent.id.isNotEmpty) {
-          parts.add('工商：${ent.name}（统一社会信用代码 ${ent.creditCode}）'
-              '法定代表人 ${ent.legalPerson}，成立日期 ${ent.foundedAt}，'
-              '注册资本 ${ent.registeredCapital}，企业类型 ${ent.enterpriseType}，'
-              '行业 ${ent.industry}，人员规模 ${ent.staffScale}，经营状态 ${ent.status}');
-        }
-      } catch (_) {}
-    }
 
     // 税务
     if (businessTag == DataBusinessTag.tax) {
