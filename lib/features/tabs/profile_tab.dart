@@ -10,7 +10,6 @@ import 'package:open_filex/open_filex.dart';
 import '../../contracts/update_service.dart';
 import '../enterprise/admin_management_page.dart';
 import '../enterprise/enterprise_auth_service.dart';
-import '../enterprise/enterprise_data.dart';
 import '../enterprise/enterprise_login_page.dart';
 import '../enterprise/enterprise_model.dart';
 import '../update/update_service_impl.dart';
@@ -45,12 +44,6 @@ class _ProfileTabState extends State<ProfileTab> {
   void initState() {
     super.initState();
     _authFuture = EnterpriseAuthService.getAuth();
-  }
-
-  /// 手机号脱敏展示：138****1234
-  String _maskPhone(String phone) {
-    if (phone.length != 11) return phone;
-    return '${phone.substring(0, 3)}****${phone.substring(7)}';
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -185,19 +178,6 @@ class _ProfileTabState extends State<ProfileTab> {
         final auth = snap.data;
         final isOwner = auth?.isOwner ?? true;
 
-        // 查找企业对象获取信用代码和经营状态
-        Enterprise? ent;
-        if (auth != null) {
-          try {
-            ent = kEnterpriseSeedData.firstWhere(
-              (e) => e.id == auth.enterpriseId || e.name == auth.enterpriseName,
-            );
-          } catch (_) {
-            ent = null;
-          }
-        }
-        final creditCode = ent?.creditCode ?? auth?.enterpriseId ?? '';
-
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: SafeArea(
@@ -232,20 +212,48 @@ class _ProfileTabState extends State<ProfileTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            auth?.enterpriseName ?? '未登录',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1A1B1C),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          // 第一行：姓名 + 角色标签
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  auth?.userName ?? '未登录',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1A1B1C),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: isOwner
+                                      ? const Color(0xFF5B7FD4).withOpacity(0.1)
+                                      : const Color(0xFF10B981).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  isOwner ? '超级管理员' : '管理员',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isOwner
+                                        ? const Color(0xFF5B7FD4)
+                                        : const Color(0xFF10B981),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 6),
-                          // 统一社会信用代码
+                          // 第二行：企业全称（小字）
                           Text(
-                            '信用代码：$creditCode',
+                            auth?.enterpriseName ?? '',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF6B7280),
