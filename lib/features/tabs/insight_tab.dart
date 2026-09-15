@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/business_domain.dart';
+import '../enterprise/enterprise_auth_service.dart';
 
 class InsightTab extends StatefulWidget {
   /// 打开对话页回调（点击顶部"对话"板块时触发）
@@ -23,11 +24,9 @@ class InsightTab extends StatefulWidget {
 }
 
 class _InsightTabState extends State<InsightTab> {
-  /// 全部业务智能体定义（从三位一体注册表派生，顺序即展示顺序）
-  static final List<_AgentDef> _agents = [
-    for (final d in kBusinessDomains)
-      _AgentDef(d.icon, d.color, d.tag, d.subtitle),
-  ];
+  /// 当前登录用户被禁用的业务域ID（owner 为空，admin 由 owner 配置）
+  List<String> _disabledDomains = [];
+  bool _isOwner = true;
 
   /// 智能体显示开关（title -> 是否显示），默认全部开启
   final Map<String, bool> _enabled = {};
@@ -35,25 +34,41 @@ class _InsightTabState extends State<InsightTab> {
   @override
   void initState() {
     super.initState();
-    _loadEnabled();
+    _loadAuthAndEnabled();
   }
 
-  Future<void> _loadEnabled() async {
+  Future<void> _loadAuthAndEnabled() async {
+    final auth = await EnterpriseAuthService.getAuth();
+    _disabledDomains = auth?.disabledDomains ?? const [];
+    _isOwner = auth?.isOwner ?? true;
+
     final prefs = await SharedPreferences.getInstance();
     final map = <String, bool>{};
-    for (final a in _agents) {
-      map[a.title] = prefs.getBool('agent_enabled_${a.title}') ?? true;
+    for (final d in kBusinessDomains) {
+      map[d.tag] = prefs.getBool('agent_enabled_${d.tag}') ?? true;
     }
     if (mounted) {
       setState(() {
-        _enabled
-          ..clear()
-          ..addAll(map);
+        _enabled..clear()..addAll(map);
       });
     }
   }
 
   bool _isEnabled(String title) => _enabled[title] ?? true;
+
+  /// 按权限+偏好过滤后的可见智能体
+  List<_AgentDef> get _visibleAgents => [
+        for (final d in kBusinessDomains)
+          if (!_disabledDomains.contains(d.id) && _isEnabled(d.tag))
+            _AgentDef(d.icon, d.color, d.tag, d.subtitle),
+      ];
+
+  /// 全部智能体（管理面板用，已按权限过滤）
+  List<_AgentDef> get _allAgents => [
+        for (final d in kBusinessDomains)
+          if (!_disabledDomains.contains(d.id))
+            _AgentDef(d.icon, d.color, d.tag, d.subtitle),
+      ];
 
   Future<void> _setEnabled(String title, bool value) async {
     setState(() => _enabled[title] = value);
@@ -100,9 +115,9 @@ class _InsightTabState extends State<InsightTab> {
                     child: ListView.builder(
                       shrinkWrap: true,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: _agents.length,
+                      itemCount: _allAgents.length,
                       itemBuilder: (context, i) {
-                        final a = _agents[i];
+                        final a = _allAgents[i];
                         final enabled = _enabled[a.title] ?? true;
                         return ListTile(
                           leading: Container(
@@ -148,8 +163,8 @@ class _InsightTabState extends State<InsightTab> {
 
   @override
   Widget build(BuildContext context) {
-    // 按开关状态过滤需要显示的业务智能体
-    final visibleAgents = _agents.where((a) => _isEnabled(a.title)).toList();
+    // 按权限+偏好过滤需要显示的业务智能体
+    final visibleAgents = _visibleAgents;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F3EE),
@@ -161,7 +176,7 @@ class _InsightTabState extends State<InsightTab> {
               // 顶部大卡片：对话 | 洞察 上下两个板块（整体浅蓝渐变）
               _buildTopCard(context),
               const SizedBox(height: 16),
-              // 业务智能体栏目标题行（右侧齿轮管理开关）
+              // 业务智能体栏目标题行（右侧齿轮管理开关，仅 owner 可见）
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -175,19 +190,20 @@ class _InsightTabState extends State<InsightTab> {
                       ),
                     ),
                     const Spacer(),
-                    // 细齿轮：管理业务智能体卡片开关
-                    InkWell(
-                      onTap: _showManageSheet,
-                      borderRadius: BorderRadius.circular(8),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.settings_outlined,
-                          size: 18,
-                          color: Color(0xFF9CA3AF),
+                    if (_isOwner)
+                      // 细齿轮：管理业务智能体卡片开关
+                      InkWell(
+                        onTap: _showManageSheet,
+                        borderRadius: BorderRadius.circular(8),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.settings_outlined,
+                            size: 18,
+                            color: Color(0xFF9CA3AF),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../../contracts/update_service.dart';
+import '../enterprise/admin_management_page.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_login_page.dart';
 import '../enterprise/enterprise_model.dart';
@@ -178,76 +179,112 @@ class _ProfileTabState extends State<ProfileTab> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // === 顶部：企业信息（企业图标 + 企业名称 + 管理员） ===
-          Container(
-            width: 88,
-            height: 88,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF5B7FD4), Color(0xFF8CA8E8)],
-              ),
-            ),
-            child: const Icon(Icons.business, size: 46, color: Colors.white),
-          ),
-          const SizedBox(height: 14),
-          FutureBuilder<EnterpriseAuth?>(
-            future: _authFuture,
-            builder: (context, snap) {
-              final auth = snap.data;
-              return Column(
-                children: [
-                  Text(
-                    auth?.enterpriseName ?? '未登录',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1B1C),
-                    ),
-                    textAlign: TextAlign.center,
+      child: FutureBuilder<EnterpriseAuth?>(
+        future: _authFuture,
+        builder: (context, snap) {
+          final auth = snap.data;
+          final isOwner = auth?.isOwner ?? true;
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // === 顶部头像 ===
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isOwner
+                        ? const [Color(0xFF5B7FD4), Color(0xFF8CA8E8)]
+                        : const [Color(0xFF10B981), Color(0xFF6EE7B7)],
                   ),
-                  const SizedBox(height: 4),
-                  if (auth != null)
-                    Text(
-                      '管理员：${auth.userName} · ${_maskPhone(auth.phone)}',
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                    ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 40),
-          // === 操作区：检查更新 + 退出登录 ===
-          if (_checking)
-            const CircularProgressIndicator()
-          else
-            OutlinedButton.icon(
-              onPressed: () => _checkUpdate(context),
-              icon: const Icon(Icons.system_update_alt),
-              label: const Text('检查更新'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF5B7FD4),
-                side: const BorderSide(color: Color(0xFF5B7FD4)),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                ),
+                child: Icon(
+                  isOwner ? Icons.business : Icons.person,
+                  size: 46,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () => _logout(context),
-            icon: const Icon(Icons.logout),
-            label: const Text('退出登录'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFD05656),
-              side: const BorderSide(color: Color(0xFFD05656)),
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-            ),
-          ),
-        ],
+              const SizedBox(height: 14),
+              // 企业名称（仅 owner 显示）
+              if (auth != null && isOwner)
+                Text(
+                  auth.enterpriseName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1B1C),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              if (auth != null && isOwner) const SizedBox(height: 4),
+              // 管理员/个人信息
+              if (auth != null)
+                Text(
+                  isOwner
+                      ? '超级管理员：${auth.userName} · ${_maskPhone(auth.phone)}'
+                      : '${auth.userName} · ${_maskPhone(auth.phone)}',
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                ),
+              if (auth == null)
+                const Text(
+                  '未登录',
+                  style: TextStyle(fontSize: 18, color: Color(0xFF9CA3AF)),
+                ),
+              const SizedBox(height: 40),
+              // === 管理员管理入口（仅 owner） ===
+              if (auth != null && isOwner)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AdminManagementPage(
+                          ownerPhone: auth.phone,
+                          enterpriseName: auth.enterpriseName,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.manage_accounts),
+                  label: const Text('管理员管理'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF5B7FD4),
+                    side: const BorderSide(color: Color(0xFF5B7FD4)),
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  ),
+                ),
+              if (auth != null && isOwner) const SizedBox(height: 16),
+              // === 检查更新 ===
+              if (_checking)
+                const CircularProgressIndicator()
+              else
+                OutlinedButton.icon(
+                  onPressed: () => _checkUpdate(context),
+                  icon: const Icon(Icons.system_update_alt),
+                  label: const Text('检查更新'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF5B7FD4),
+                    side: const BorderSide(color: Color(0xFF5B7FD4)),
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => _logout(context),
+                icon: const Icon(Icons.logout),
+                label: const Text('退出登录'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD05656),
+                  side: const BorderSide(color: Color(0xFFD05656)),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

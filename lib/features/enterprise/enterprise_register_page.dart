@@ -123,6 +123,7 @@ class _EnterpriseRegisterPageState extends State<EnterpriseRegisterPage> {
         enterpriseId: _selectedEnterprise!.id,
         userName: name,
         createdAt: DateTime.now().toIso8601String(),
+        role: 'owner',
       );
 
       final result = await EnterpriseAuthService.registerUser(user);
@@ -141,6 +142,7 @@ class _EnterpriseRegisterPageState extends State<EnterpriseRegisterPage> {
         enterpriseId: _selectedEnterprise!.id,
         phone: phone,
         userName: name,
+        role: 'owner',
       ));
 
       if (mounted) {

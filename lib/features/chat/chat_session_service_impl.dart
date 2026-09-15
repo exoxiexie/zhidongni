@@ -31,6 +31,9 @@ class ChatSessionServiceImpl implements ChatSessionService {
   String? _tenantId;
   bool _ready = false;
 
+  /// 当前登录人手机号（用于会话按人隔离）
+  String? _currentUserPhone;
+
   @override
   bool get isReady => _ready;
 
@@ -69,12 +72,16 @@ class ChatSessionServiceImpl implements ChatSessionService {
           ? ent!.creditCode
           : auth.enterpriseId;
       _tenantId = tenantId;
+      _currentUserPhone = auth.phone;
 
       // 打开该租户的数据库
       await appDatabase.open(tenantId);
 
-      // 加载历史会话
-      final sessions = await _sessionDao.findByTenant(tenantId);
+      // 加载历史会话：owner 看全部，admin 只看自己创建的
+      final isOwner = auth.role == 'owner';
+      final sessions = isOwner
+          ? await _sessionDao.findByTenant(tenantId)
+          : await _sessionDao.findByTenant(tenantId, createdBy: auth.phone);
       if (sessions.isNotEmpty) {
         final convList = sessions
             .map((s) => Conversation(
@@ -117,6 +124,7 @@ class ChatSessionServiceImpl implements ChatSessionService {
           title: '新对话',
           createdAt: now,
           updatedAt: now,
+          createdBy: auth.phone,
         );
         await _sessionDao.insert(session);
       }
@@ -148,6 +156,7 @@ class ChatSessionServiceImpl implements ChatSessionService {
         title: '新对话',
         createdAt: now,
         updatedAt: now,
+        createdBy: _currentUserPhone,
       ));
     }
     return newId;

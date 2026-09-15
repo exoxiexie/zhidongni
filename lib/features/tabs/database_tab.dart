@@ -587,10 +587,10 @@ class DatabaseTabState extends State<DatabaseTab> {
     );
   }
 
-  /// 按业务视图：12 个业务域卡片 + 数据条数，点开进入业务数据列表页
+  /// 按业务视图：业务域卡片 + 数据条数，点开进入业务数据列表页
   Widget _buildBusinessView() {
     // 业务域卡片定义（与业务智能体一一对应）
-    final cards = [
+    final allCards = [
       _BusinessCardData(DataBusinessTag.loan, Icons.account_balance_outlined,
           const Color(0xFFD97706), '贷款融资'),
       _BusinessCardData(DataBusinessTag.supplyChain,
@@ -616,6 +616,12 @@ class DatabaseTabState extends State<DatabaseTab> {
       _BusinessCardData(DataBusinessTag.socialSecurity, Icons.shield_outlined,
           const Color(0xFFEF4444), '社保公积金'),
     ];
+
+    // 按当前管理员权限过滤（owner 看全部，admin 排除被禁用的域）
+    final disabled = _auth?.disabledDomains ?? const [];
+    final cards = allCards
+        .where((c) => !disabled.contains(c.tag))
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),

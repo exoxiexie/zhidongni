@@ -75,6 +75,8 @@ class _EnterpriseLoginPageState extends State<EnterpriseLoginPage> {
         enterpriseId: user.enterpriseId,
         phone: phone,
         userName: user.userName,
+        role: user.role,
+        disabledDomains: user.disabledDomains,
       ));
 
       if (mounted) {

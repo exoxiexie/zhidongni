@@ -17,12 +17,13 @@ class SessionDao {
     );
   }
 
-  /// 获取指定租户的所有会话，按更新时间倒序
-  Future<List<SessionEntity>> findByTenant(String tenantId) async {
+  /// 获取指定租户的会话，按更新时间倒序
+  /// [createdBy] 不为空时只查该人创建的会话（admin 视角）；为空时查全部（owner 视角）
+  Future<List<SessionEntity>> findByTenant(String tenantId, {String? createdBy}) async {
     final maps = await _db.query(
       'sessions',
-      where: 'tenant_id = ?',
-      whereArgs: [tenantId],
+      where: createdBy != null ? 'tenant_id = ? AND created_by = ?' : 'tenant_id = ?',
+      whereArgs: createdBy != null ? [tenantId, createdBy] : [tenantId],
       orderBy: 'updated_at DESC',
     );
     return maps.map((m) => SessionEntity.fromMap(m)).toList();

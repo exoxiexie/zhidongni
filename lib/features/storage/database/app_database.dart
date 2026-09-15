@@ -32,7 +32,7 @@ class AppDatabase {
     final path = await TenantStorage.getDatabasePath(tenantId);
     _db = await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -68,7 +68,8 @@ class AppDatabase {
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         message_count INTEGER DEFAULT 0,
-        last_extracted_message_id TEXT
+        last_extracted_message_id TEXT,
+        created_by TEXT
       )
     ''');
 
@@ -226,6 +227,13 @@ class AppDatabase {
     if (oldVersion < 5) {
       // v4 → v5：按三位一体注册表创建 12 张业务域数据表
       await _createBusinessDomainTables(db);
+    }
+
+    if (oldVersion < 6) {
+      // v5 → v6：sessions 表添加 created_by 字段（记录创建人手机号，用于按人隔离对话）
+      await db.execute(
+        'ALTER TABLE sessions ADD COLUMN created_by TEXT',
+      );
     }
   }
 }

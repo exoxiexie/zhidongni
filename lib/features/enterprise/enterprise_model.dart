@@ -104,13 +104,24 @@ class EnterpriseAuth {
   final String phone;
   final String userName;
 
+  /// 角色：owner=超级管理员（企业注册人），admin=子管理员
+  final String role;
+
+  /// 该管理员被关闭的业务域ID列表（空=全部可见）
+  final List<String> disabledDomains;
+
   const EnterpriseAuth({
     required this.token,
     required this.enterpriseName,
     required this.enterpriseId,
     required this.phone,
     required this.userName,
+    this.role = 'owner',
+    this.disabledDomains = const [],
   });
+
+  bool get isOwner => role == 'owner';
+  bool get isAdmin => role == 'admin';
 
   factory EnterpriseAuth.fromJson(Map<String, dynamic> json) => EnterpriseAuth(
         token: json['token'] as String? ?? '',
@@ -118,6 +129,11 @@ class EnterpriseAuth {
         enterpriseId: json['enterpriseId'] as String? ?? '',
         phone: json['phone'] as String? ?? '',
         userName: json['userName'] as String? ?? '',
+        role: json['role'] as String? ?? 'owner',
+        disabledDomains: (json['disabledDomains'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -126,6 +142,8 @@ class EnterpriseAuth {
         'enterpriseId': enterpriseId,
         'phone': phone,
         'userName': userName,
+        'role': role,
+        'disabledDomains': disabledDomains,
       };
 }
 
@@ -138,6 +156,12 @@ class EnterpriseUser {
   final String userName;
   final String createdAt;
 
+  /// 角色：owner=超级管理员（企业注册人），admin=子管理员
+  final String role;
+
+  /// 该管理员被关闭的业务域ID列表（空=全部可见）
+  final List<String> disabledDomains;
+
   const EnterpriseUser({
     required this.phone,
     required this.password,
@@ -145,6 +169,8 @@ class EnterpriseUser {
     required this.enterpriseId,
     required this.userName,
     required this.createdAt,
+    this.role = 'owner',
+    this.disabledDomains = const [],
   });
 
   factory EnterpriseUser.fromJson(Map<String, dynamic> json) => EnterpriseUser(
@@ -154,6 +180,11 @@ class EnterpriseUser {
         enterpriseId: json['enterpriseId'] as String? ?? '',
         userName: json['userName'] as String? ?? '',
         createdAt: json['createdAt'] as String? ?? '',
+        role: json['role'] as String? ?? 'owner',
+        disabledDomains: (json['disabledDomains'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -163,5 +194,7 @@ class EnterpriseUser {
         'enterpriseId': enterpriseId,
         'userName': userName,
         'createdAt': createdAt,
+        'role': role,
+        'disabledDomains': disabledDomains,
       };
 }
