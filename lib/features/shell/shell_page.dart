@@ -101,7 +101,7 @@ class _ShellPageState extends State<ShellPage> {
     ];
 
     return Scaffold(
-      appBar: _index == 3
+      appBar: (_index == 3 || _index == 2)
           ? null
           : AppBar(
               title: Text(_titles[_index]),

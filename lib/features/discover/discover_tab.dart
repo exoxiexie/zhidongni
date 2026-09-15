@@ -1,14 +1,15 @@
 /// 发现 Tab · AI 驱动的 B2B 供应链交易平台
 ///
-/// 顶栏：搜索框
+/// 顶部：AI 对话框（和通用对话页同款 ChatInputBar），贴顶离状态栏 4dp
 /// 内容区：商品推荐流（基于企业行业千人千面）
-/// 底部：AI 对话框（采购助手）
+/// 对话：AI 作为采购助手，同时充当搜索引擎
 library;
 
 import 'package:flutter/material.dart';
 
 import '../../contracts/agent_service.dart';
 import '../../contracts/chat_service.dart';
+import '../chat/chat_input_bar.dart';
 import '../enterprise/enterprise_auth_service.dart';
 import '../enterprise/enterprise_data.dart';
 import 'product_model.dart';
@@ -27,11 +28,9 @@ class DiscoverTab extends StatefulWidget {
 }
 
 class _DiscoverTabState extends State<DiscoverTab> {
-  final TextEditingController _searchController = TextEditingController();
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String _searchQuery = '';
   String _currentIndustry = '';
   String _currentEnterpriseName = '';
   bool _isChatting = false;
@@ -65,32 +64,17 @@ class _DiscoverTabState extends State<DiscoverTab> {
 
   /// 规则式推荐：基于企业行业匹配商品
   List<Product> get _recommendedProducts {
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      return kSeedProducts.where((p) {
-        return p.title.toLowerCase().contains(q) ||
-            p.description.toLowerCase().contains(q) ||
-            p.keywords.any((k) => k.toLowerCase().contains(q)) ||
-            p.industryTags.any((t) => t.toLowerCase().contains(q)) ||
-            p.supplierName.toLowerCase().contains(q);
-      }).toList();
-    }
-
-    // 基于行业关键词匹配
     if (_currentIndustry.isEmpty) return kSeedProducts;
 
     final industry = _currentIndustry;
     final scored = kSeedProducts.map((p) {
       int score = 0;
-      // 行业标签匹配
       for (final tag in p.industryTags) {
         if (industry.contains(tag) || tag.contains(industry)) score += 10;
       }
-      // 关键词匹配
       for (final kw in p.keywords) {
         if (industry.contains(kw)) score += 5;
       }
-      // 信用分加成
       score += p.supplierRating ~/ 10;
       return MapEntry(p, score);
     }).toList()
@@ -101,13 +85,12 @@ class _DiscoverTabState extends State<DiscoverTab> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     _chatController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  /// 发送采购咨询给 AI
+  /// 发送采购咨询给 AI（对话框即搜索引擎）
   Future<void> _sendPurchaseQuery() async {
     final text = _chatController.text.trim();
     if (text.isEmpty || _isChatting || widget.chatService == null) return;
@@ -135,9 +118,7 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
 ''';
 
       final reply = await widget.chatService!.sendMessage(
-        [
-          ChatMessage(role: 'user', content: text),
-        ],
+        [ChatMessage(role: 'user', content: text)],
         systemExtra: systemPrompt,
       );
 
@@ -163,8 +144,22 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
 
     return Column(
       children: [
-        // === 顶栏搜索框 ===
-        _buildSearchBar(),
+        // === 顶部 AI 对话框（贴顶 4dp） ===
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+          child: ChatInputBar(
+            controller: _chatController,
+            isLoading: _isChatting,
+            selectedModel: kChatModels[0],
+            onSend: _sendPurchaseQuery,
+            onAddAttachment: () {},
+            onConnectComputer: () {},
+            onSkillSelect: () {},
+          ),
+        ),
+
+        // === AI 回复气泡 ===
+        if (_chatReply != null) _buildChatReply(),
 
         // === 推荐标题 ===
         Padding(
@@ -173,11 +168,9 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
             children: [
               const Icon(Icons.recommend, size: 18, color: Color(0xFF5B7FD4)),
               const SizedBox(width: 6),
-              Text(
-                _searchQuery.isEmpty
-                    ? '为你推荐（基于$_currentIndustry）'
-                    : '搜索结果',
-                style: const TextStyle(
+              const Text(
+                '为你推荐',
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1A1B1C),
@@ -209,34 +202,7 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
                   ),
                 ),
         ),
-
-        // === AI 回复气泡 ===
-        if (_chatReply != null) _buildChatReply(),
-
-        // === 底部 AI 对话框 ===
-        _buildChatInput(),
       ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      decoration: BoxDecoration(
-        color: const Color(0x0F000000),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (v) => setState(() => _searchQuery = v.trim()),
-        decoration: const InputDecoration(
-          hintText: '搜索商品、店铺、服务…',
-          hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-          prefixIcon: Icon(Icons.search, size: 20, color: Color(0xFF9CA3AF)),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-      ),
     );
   }
 
@@ -269,63 +235,6 @@ ${kSeedProducts.map((p) => '- ${p.title}（${p.priceText}，起订${p.moq}，${p
                 fontSize: 14, height: 1.5, color: Color(0xFF1A1B1C)),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildChatInput() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0x0F000000),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: TextField(
-                  controller: _chatController,
-                  enabled: !_isChatting,
-                  decoration: InputDecoration(
-                    hintText: _isChatting ? '正在思考…' : '问 AI 采购助手，帮你找货比价…',
-                    hintStyle:
-                        const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                    border: InputBorder.none,
-                  ),
-                  onSubmitted: (_) => _sendPurchaseQuery(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _isChatting ? null : _sendPurchaseQuery,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _isChatting
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF5B7FD4),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.send, size: 18, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
