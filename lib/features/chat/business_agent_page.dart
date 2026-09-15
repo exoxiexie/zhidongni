@@ -365,6 +365,15 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
             ],
           ),
         ),
+        // 右上角：新建对话
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit, size: 22),
+            onPressed: _createNewSession,
+            tooltip: '新建对话',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       drawer: _buildDrawer(),
       body: Column(
