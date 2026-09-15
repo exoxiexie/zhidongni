@@ -25,6 +25,7 @@ class EnterpriseLoginPage extends StatefulWidget {
 class _EnterpriseLoginPageState extends State<EnterpriseLoginPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _passwordFocusNode = FocusNode();
   String _error = '';
   bool _loading = false;
   late final ChatService _chatService;
@@ -41,6 +42,7 @@ class _EnterpriseLoginPageState extends State<EnterpriseLoginPage> {
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -142,7 +144,12 @@ class _EnterpriseLoginPageState extends State<EnterpriseLoginPage> {
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
+                focusNode: _passwordFocusNode,
                 obscureText: true,
+                onTap: () {
+                  // 确保首次点击时焦点稳定落在密码框
+                  _passwordFocusNode.requestFocus();
+                },
                 decoration: InputDecoration(
                   hintText: '请输入密码',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

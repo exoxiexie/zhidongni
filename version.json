@@ -1,1 +1,1 @@
-{"versionName":"1.2.48","versionCode":101,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.48/zhidongni-v1.2.48.apk","changelog":"新增多管理员体系：超级管理员可创建子管理员，按业务域开关控制可见性，对话按人隔离"}
+{"versionName":"1.2.49","versionCode":102,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.49/zhidongni-v1.2.49.apk","changelog":"修复登录页密码框首次点击无法输入；我的页面重构为微信风格浅色卡片布局"}
