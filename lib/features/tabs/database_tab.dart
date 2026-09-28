@@ -692,6 +692,8 @@ class DatabaseTabState extends State<DatabaseTab> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           mainAxisSpacing: 16,
