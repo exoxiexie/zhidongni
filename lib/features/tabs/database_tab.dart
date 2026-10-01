@@ -740,7 +740,7 @@ class DatabaseTabState extends State<DatabaseTab> {
         children: [
           Stack(
             children: [
-              Icon(Icons.folder, size: 56, color: card.color),
+              const Icon(Icons.folder, size: 56, color: Color(0xFFFFC107)),
               if (count > 0)
                 Positioned(
                   right: 0,
@@ -748,7 +748,7 @@ class DatabaseTabState extends State<DatabaseTab> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      color: card.color,
+                      color: const Color(0xFFF59E0B),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
