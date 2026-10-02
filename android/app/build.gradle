@@ -62,6 +62,9 @@ android {
 
 flutter {
     source '../..'
+    // 永久禁用字体图标 tree-shaking，避免构建时卡在字体优化步骤
+    // 代价：APK 增大约1.6MB（保留完整 MaterialIcons 字体），可接受
+    treeShakeIcons = false
 }
 
 dependencies {}
