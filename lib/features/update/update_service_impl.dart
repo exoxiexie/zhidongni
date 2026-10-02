@@ -25,6 +25,14 @@ class HttpUpdateService implements UpdateService {
             connectTimeout: const Duration(seconds: 30),
             receiveTimeout: const Duration(seconds: 30),
             sendTimeout: const Duration(seconds: 30),
+            // 伪装成浏览器请求，绕过 Gitee WAF 对非浏览器 UA 的限速
+            headers: const {
+              'User-Agent':
+                  'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+              'Accept': 'application/json, text/plain, */*',
+              'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+              'Cache-Control': 'no-cache',
+            },
           ));
 
   /// 依序尝试每个更新源读取 version.json，第一个成功即返回

@@ -1,1 +1,1 @@
-{"versionName":"1.2.69","versionCode":122,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.69/zhidongni-v1.2.69.apk","changelog":"检查更新超时时间从15秒延长至30秒，缓解Gitee网络波动导致的更新失败"}
+{"versionName":"1.2.70","versionCode":123,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.70/zhidongni-v1.2.70.apk","changelog":"检查更新请求伪装成浏览器UA，绕过Gitee WAF对非浏览器请求的限速挂起"}
