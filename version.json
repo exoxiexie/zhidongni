@@ -1,1 +1,1 @@
-{"versionName":"1.2.68","versionCode":121,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.68/zhidongni-v1.2.68.apk","changelog":"替换APP图标为新的S形标志"}
+{"versionName":"1.2.69","versionCode":122,"url":"https://gitee.com/laoxie2076/zhidongni/releases/download/v1.2.69/zhidongni-v1.2.69.apk","changelog":"检查更新超时时间从15秒延长至30秒，缓解Gitee网络波动导致的更新失败"}

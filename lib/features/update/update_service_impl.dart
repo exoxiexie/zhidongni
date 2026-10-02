@@ -22,17 +22,17 @@ class HttpUpdateService implements UpdateService {
   HttpUpdateService({required this.baseUrls, Dio? dio})
       : _dio = dio ??
           Dio(BaseOptions(
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 15),
-            sendTimeout: const Duration(seconds: 15),
+            connectTimeout: const Duration(seconds: 30),
+            receiveTimeout: const Duration(seconds: 30),
+            sendTimeout: const Duration(seconds: 30),
           ));
 
   /// 依序尝试每个更新源读取 version.json，第一个成功即返回
-  /// 总超时保护：15 秒内必须返回，避免一直转圈
+  /// 总超时保护：30 秒内必须返回，避免一直转圈
   Future<Map<String, dynamic>> _fetchVersionInfo() async {
     return _fetchVersionInfoWithSources().timeout(
-      const Duration(seconds: 15),
-      onTimeout: () => throw Exception('检查更新超时（15秒）'),
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('检查更新超时（30秒）'),
     );
   }
 
