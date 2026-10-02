@@ -122,6 +122,20 @@ class _BusinessAgentPageState extends State<BusinessAgentPage> {
   }
 
   void _createNewSession() async {
+    // 先检测是否存在0消息的空会话，有就直接切换过去，不重复创建
+    for (final s in _sessions) {
+      if (s.messageCount == 0) {
+        _switchSession(s);
+        if (mounted) {
+          setState(() {
+            _controller.clear();
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    }
+
     final now = DateTime.now().millisecondsSinceEpoch;
     final session = SessionEntity(
       id: now.toString(),

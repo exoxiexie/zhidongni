@@ -137,6 +137,14 @@ class ChatSessionServiceImpl implements ChatSessionService {
 
   @override
   Future<String> newConversation() async {
+    // 先检测是否存在0消息的空会话，有就直接切换过去，不重复创建
+    for (int i = 0; i < _conversations.length; i++) {
+      if (_conversations[i].messages.isEmpty) {
+        _currentIndex = i;
+        return _conversations[i].id;
+      }
+    }
+
     final newId = DateTime.now().millisecondsSinceEpoch.toString();
     _conversations.insert(
       0,
