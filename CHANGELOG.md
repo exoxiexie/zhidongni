@@ -21,6 +21,40 @@
 
 ---
 
+## [1.2.72] - 2026-10-09
+
+后端代理由新加坡迁至成都，网络握手大幅加快，首字更早出现。
+
+### 问题
+服务端代理部署在阿里云函数计算**新加坡**区域，App 每次请求都要绕道海外：
+
+| 环节 | 旧（新加坡） | 直连 DeepSeek 官方 |
+| --- | --- | --- |
+| 建连 | 0.22 s | 0.017 s |
+| TLS 握手 | 0.69 ~ 3.38 s | 0.030 s |
+
+单次请求光网络就多花 0.7~3.4 秒，而 DeepSeek 服务端本身在国内，绕新加坡属于纯损耗。
+
+### 改动
+- `lib/contracts/api_config.dart` 的 `proxyBaseUrl` 由 `ap-southeast-1`（新加坡）
+  改为 `cn-chengdu`（成都）：`https://zhidongk-api-cd-nknkhdghnt.cn-chengdu.fcapp.run`
+- 派生地址 `chatCompletionsUrl` / `anthropicMessagesUrl` 自动跟随，其余代码零改动。
+- 与「职管家」共用同一套后端代理（同一函数、同一令牌）。
+
+### 构建配置
+- `android/gradle.properties`：`-Xmx4G` → `-Xmx2G -XX:MaxMetaspaceSize=512m`，
+  并新增 `kotlin.daemon.jvmargs=-Xmx1G`。本机物理内存仅 8GB，原先 4G 堆会挤爆
+  物理内存、迫使内核大量换页到 swap，实测构建耗时从 2 分多劣化到 10 分多。
+
+### 实测（2026-10-09）
+| 项目 | 旧（新加坡） | 新（成都） |
+| --- | --- | --- |
+| TLS 握手 | 0.736 s | **0.040 s** |
+| `/ping` 健康检查 | — | 200 ✅ `configured:true` |
+| 非流式 / 流式 SSE / 流式+tools / Anthropic 兼容接口 | ✅ | 全部 200 ✅ |
+
+---
+
 ## [1.1.0] - 2026-09-09
 
 ### 修复
